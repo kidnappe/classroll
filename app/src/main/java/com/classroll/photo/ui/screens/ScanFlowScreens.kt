@@ -344,7 +344,7 @@ fun ConfirmScreen(
     selectedIds: Set<String>,
     onFilterChange: (Verdict) -> Unit,
     onTogglePhoto: (String) -> Unit,
-    onOpenPhoto: (PhotoItem) -> Unit,
+    onOpenPhotos: (List<PhotoItem>, Int) -> Unit,
     onSelectAll: () -> Unit,
     onInvert: () -> Unit,
     onSkipGroup: (String) -> Unit,
@@ -382,7 +382,7 @@ fun ConfirmScreen(
                         photo = photo,
                         selected = photo.id in selectedIds,
                         onToggle = { onTogglePhoto(photo.id) },
-                        onOpen = { onOpenPhoto(photo) },
+                        onOpen = { onOpenPhotos(visiblePhotos, visiblePhotos.indexOf(photo)) },
                     )
                 }
             }

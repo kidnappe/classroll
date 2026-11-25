@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Icon
@@ -72,6 +74,7 @@ fun FullscreenPhotoScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color.Black.copy(alpha = .35f))
+                .statusBarsPadding()
                 .padding(horizontal = 8.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -88,7 +91,10 @@ fun FullscreenPhotoScreen(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    "${pagerState.currentPage + 1} / ${photos.size}",
+                    buildString {
+                        if (current.week > 0) append("第 ${current.week} 周 · ")
+                        append("${pagerState.currentPage + 1} / ${photos.size}")
+                    },
                     color = Color.White.copy(alpha = .7f),
                     style = MaterialTheme.typography.labelMedium,
                 )
@@ -99,6 +105,7 @@ fun FullscreenPhotoScreen(
                 .align(Alignment.BottomStart)
                 .fillMaxWidth()
                 .background(Color.Black.copy(alpha = .45f))
+                .navigationBarsPadding()
                 .padding(16.dp),
         ) {
             Text(

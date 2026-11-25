@@ -64,6 +64,7 @@ import com.classroll.photo.scan.MediaPermission
 import com.classroll.photo.scan.ScanSource
 import com.classroll.photo.scan.ScanViewModel
 import com.classroll.photo.ui.screens.ArchiveManagerScreen
+import com.classroll.photo.ui.screens.CandidateFullscreenScreen
 import com.classroll.photo.ui.screens.ConfirmScreen
 import com.classroll.photo.ui.screens.CoursesScreen
 import com.classroll.photo.ui.screens.FullscreenPhotoScreen
@@ -90,11 +91,9 @@ private enum class AppTab { Courses, Library, Settings }
 
 private enum class FlowStep { Scan, Confirm, Result }
 
-private sealed interface DialogState {
-    data class Viewer(val photo: PhotoItem) : DialogState
-}
-
 private data class PhotoViewer(val photos: List<ArchiveItem>, val index: Int)
+
+private data class CandidateViewer(val photos: List<PhotoItem>, val index: Int)
 
 @Composable
 fun AppShell(
@@ -111,7 +110,7 @@ fun AppShell(
     var showArchiveManager by remember { mutableStateOf(false) }
     var pendingIncludeArchived by remember { mutableStateOf(false) }
     var photoViewer by remember { mutableStateOf<PhotoViewer?>(null) }
-    var activeDialog by remember { mutableStateOf<DialogState?>(null) }
+    var candidateViewer by remember { mutableStateOf<CandidateViewer?>(null) }
     var hasFullAccess by remember { mutableStateOf(MediaPermission.hasFullAccess(context)) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -218,9 +217,8 @@ fun AppShell(
     }
 
     val pendingSchedule = state.pendingSchedule
-    BackHandler(enabled = pendingSchedule == null && (activeDialog != null || flowStep != null || showTimetable || showArchiveManager || currentTab == AppTab.Library)) {
+    BackHandler(enabled = pendingSchedule == null && (flowStep != null || showTimetable || showArchiveManager || currentTab == AppTab.Library)) {
         when {
-            activeDialog != null -> activeDialog = null
             showArchiveManager -> showArchiveManager = false
             showTimetable -> showTimetable = false
             flowStep != null -> exitFlow()
@@ -247,7 +245,7 @@ fun AppShell(
             }
         },
         bottomBar = {
-            if (photoViewer == null && pendingSchedule == null && !showTimetable && !showArchiveManager) {
+            if (photoViewer == null && candidateViewer == null && pendingSchedule == null && !showTimetable && !showArchiveManager) {
                 BottomNavigation(
                     selectedTab = currentTab,
                     scanning = flowStep != null,
@@ -304,7 +302,12 @@ fun AppShell(
                         items = state.archiveItems,
                         added = state.archive?.copied ?: 0,
                         onScan = ::openScanFlow,
-                        onOpenPhotos = { photos, index -> photoViewer = PhotoViewer(photos, index) },
+                        onOpenPhotos = { photos, index ->
+                            val clicked = photos.getOrNull(index)
+                            val all = state.archiveItems
+                            val start = all.indexOfFirst { it.uri == clicked?.uri }.takeIf { it >= 0 } ?: 0
+                            photoViewer = PhotoViewer(if (all.isEmpty()) photos else all, start)
+                        },
                     )
                     AppTab.Settings -> SettingsScreen(
                         schedule = state.schedule,
@@ -347,7 +350,7 @@ fun AppShell(
                                 selectedIds = state.selectedIds,
                                 onFilterChange = viewModel::setFilter,
                                 onTogglePhoto = viewModel::togglePhoto,
-                                onOpenPhoto = { activeDialog = DialogState.Viewer(it) },
+                                onOpenPhotos = { photos, index -> candidateViewer = CandidateViewer(photos, index) },
                                 onSelectAll = viewModel::selectCurrentFilter,
                                 onInvert = viewModel::invertCurrentFilter,
                                 onSkipGroup = viewModel::skipGroup,
@@ -398,26 +401,19 @@ fun AppShell(
         }
     }
 
-    when (val dialog = activeDialog) {
-        is DialogState.Viewer -> PhotoViewerDialog(
-            photo = dialog.photo,
-            group = state.groups[dialog.photo.groupId],
-            selected = dialog.photo.id in state.selectedIds,
-            onDismiss = { activeDialog = null },
-            onReject = {
-                if (dialog.photo.id in state.selectedIds) viewModel.togglePhoto(dialog.photo.id)
-                activeDialog = null
-            },
-            onKeep = {
-                if (dialog.photo.id !in state.selectedIds) viewModel.togglePhoto(dialog.photo.id)
-                activeDialog = null
-            },
-            onRetry = {
-                viewModel.retryPhoto(dialog.photo.id)
-                activeDialog = null
-            },
-        )
-        null -> Unit
+    candidateViewer?.let { viewer ->
+        Dialog(
+            onDismissRequest = { candidateViewer = null },
+            properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+        ) {
+            CandidateFullscreenScreen(
+                photos = viewer.photos,
+                groups = state.groups,
+                startIndex = viewer.index,
+                onBack = { candidateViewer = null },
+                onRetry = viewModel::retryPhoto,
+            )
+        }
     }
 }
 

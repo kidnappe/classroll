@@ -2,7 +2,6 @@ package com.classroll.photo.data
 
 import com.classroll.photo.model.Course
 import com.classroll.photo.model.CourseSchedule
-import com.classroll.photo.model.TimetableGroups
 import com.classroll.photo.model.TimetableProfile
 import com.classroll.photo.model.TimetableSection
 import jxl.Workbook
@@ -95,7 +94,7 @@ object XlsScheduleParser {
             }.sortedWith(compareBy({ it.weekday }, { it.sections.firstOrNull() ?: 0 }, { it.name }))
             val totalWeeks = courses.maxOfOrNull { it.weeks.maxOrNull() ?: 0 } ?: headerMaxWeek
             val profiles = base?.timeProfiles?.takeIf { it.isNotEmpty() }
-                ?: listOf(defaultProfile())
+                ?: BuiltinTimetables.henanNormal
 
             return CourseSchedule(
                 semesterStart = semesterStart,
@@ -154,19 +153,4 @@ object XlsScheduleParser {
         return date.with(DayOfWeek.MONDAY)
     }
 
-    private fun defaultProfile(): TimetableProfile {
-        val times = listOf(
-            480 to 525, 535 to 580, 610 to 655, 665 to 710,
-            870 to 915, 925 to 970, 1000 to 1045, 1055 to 1100,
-            1170 to 1215, 1225 to 1270,
-        )
-        return TimetableProfile(
-            effectiveFrom = LocalDate.of(2000, 1, 1),
-            name = "默认作息",
-            sections = times.mapIndexed { index, (start, end) ->
-                TimetableSection(index + 1, start, end)
-            },
-            groups = TimetableGroups(4, 4, 2),
-        )
-    }
 }

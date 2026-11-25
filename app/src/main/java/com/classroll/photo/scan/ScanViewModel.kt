@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.classroll.photo.data.ArchiveEntry
+import com.classroll.photo.data.BuiltinTimetables
 import com.classroll.photo.data.ArchiveIndexEntry
 import com.classroll.photo.data.ArchiveIndexStore
 import com.classroll.photo.data.ArchiveItem
@@ -54,7 +55,10 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         viewModelScope.launch {
-            val schedule = scheduleStore.load()
+            val loaded = scheduleStore.load()
+            val migrated = BuiltinTimetables.migrateLegacyDefault(loaded)
+            if (migrated != null) scheduleStore.save(migrated)
+            val schedule = migrated ?: loaded
             val includeShared = settingsStore.loadIncludeSharedImages()
             mutableState.update { it.copy(schedule = schedule, includeSharedImages = includeShared) }
         }

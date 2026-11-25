@@ -13,6 +13,31 @@ class XlsScheduleParserTest {
         javaClass.classLoader!!.getResourceAsStream("sample-timetable.xls")!!.readBytes()
 
     @Test
+    fun `导入 xls 时使用内置的河南师大两套作息`() {
+        val profiles = schedule.timeProfiles
+        assertEquals(2, profiles.size)
+        assertEquals("2026-05-06", profiles[0].effectiveFrom.toString())
+        assertEquals("2026-10-08", profiles[1].effectiveFrom.toString())
+        assertEquals(14 * 60 + 30, profiles[1].sections.first { it.index == 5 }.startMinute)
+        assertEquals(16 * 60 + 40, profiles[1].sections.first { it.index == 7 }.startMinute)
+    }
+
+    @Test
+    fun `旧版默认作息迁移为内置两套`() {
+        val legacy = schedule.copy(
+            timeProfiles = listOf(
+                com.classroll.photo.model.TimetableProfile(
+                    effectiveFrom = java.time.LocalDate.of(2000, 1, 1),
+                    name = "默认作息",
+                    sections = emptyList(),
+                ),
+            ),
+        )
+        assertEquals(2, com.classroll.photo.data.BuiltinTimetables.migrateLegacyDefault(legacy)?.timeProfiles?.size)
+        assertEquals(null, com.classroll.photo.data.BuiltinTimetables.migrateLegacyDefault(schedule))
+    }
+
+    @Test
     fun `周一7-8马克思主义政治经济学覆盖全部周次`() {
         val courses = schedule.courses.filter {
             it.name == "马克思主义政治经济学" && it.weekday == 1 && it.sections == listOf(7, 8)
