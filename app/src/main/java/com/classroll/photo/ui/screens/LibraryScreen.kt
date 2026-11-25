@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -406,11 +407,16 @@ private fun SessionBlock(
     val checkShape = if (skin.hardShadow != null) RoundedCornerShape(0.dp) else CircleShape
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                title,
+            BasicText(
+                text = title,
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.weight(1f, fill = false),
-                softWrap = true,
+                maxLines = 1,
+                softWrap = false,
+                autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(
+                    minFontSize = 11.sp,
+                    maxFontSize = 16.sp,
+                ),
             )
             IconButton(onClick = onAdd, modifier = Modifier.size(30.dp)) {
                 Icon(
