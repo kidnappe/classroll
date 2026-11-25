@@ -143,6 +143,7 @@ fun ScanScreen(
                     onClick = {},
                     modifier = Modifier.fillMaxWidth(),
                     loading = true,
+                    keepPrimaryColor = true,
                 )
                 done && progress.total > 0 -> PrimaryButton(
                     text = "查看 ${progress.total} 张结果",

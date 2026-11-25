@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -76,6 +77,7 @@ import com.classroll.photo.ui.screens.ScanScreen
 import com.classroll.photo.ui.screens.SettingsScreen
 import com.classroll.photo.ui.screens.TimetableScreen
 import com.classroll.photo.ui.theme.LocalSkin
+import com.classroll.photo.ui.theme.corner
 import com.classroll.photo.ui.theme.PaperBackground
 import com.classroll.photo.ui.theme.PaperCard
 import com.classroll.photo.ui.theme.PaperGood
@@ -410,6 +412,8 @@ fun AppShell(
                 photos = viewer.photos,
                 groups = state.groups,
                 startIndex = viewer.index,
+                selectedIds = state.selectedIds,
+                onToggle = viewModel::togglePhoto,
                 onBack = { candidateViewer = null },
                 onRetry = viewModel::retryPhoto,
             )
@@ -490,9 +494,29 @@ private fun androidx.compose.foundation.layout.RowScope.TabBarItem(
     onClick: () -> Unit,
 ) {
     val skin = LocalSkin.current
-    val tint = if (selected) skin.navSelected else skin.muted
+    val bauhaus = skin.hardShadow != null
+    val selectedBg = if (bauhaus) skin.accent else skin.highlight
+    val tint = when {
+        !selected -> skin.muted
+        bauhaus -> skin.onAccent
+        else -> skin.ink
+    }
+    val highlightShape = RoundedCornerShape(skin.corner(16.dp))
     Column(
-        modifier = Modifier.weight(1f).fillMaxHeight().clickable(onClick = onClick),
+        modifier = Modifier
+            .weight(1f)
+            .fillMaxHeight()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 4.dp, vertical = 5.dp)
+            .then(
+                if (selected) {
+                    Modifier
+                        .background(selectedBg, highlightShape)
+                        .then(if (bauhaus) Modifier.border(skin.hairline, highlightShape) else Modifier)
+                } else {
+                    Modifier
+                },
+            ),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {

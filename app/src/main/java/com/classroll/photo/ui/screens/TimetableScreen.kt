@@ -201,7 +201,7 @@ private fun ProfileCard(profile: TimetableProfile, active: Boolean, onClick: () 
                 Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(profile.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(profile.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
                         if (active) {
                             Spacer(Modifier.width(7.dp))
                             Surface(shape = RoundedCornerShape(LocalSkin.current.corner(999.dp)), color = PaperGood.copy(alpha = .12f)) {
@@ -209,6 +209,8 @@ private fun ProfileCard(profile: TimetableProfile, active: Boolean, onClick: () 
                                     "当前使用",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = PaperGood,
+                                    maxLines = 1,
+                                    softWrap = false,
                                     modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
                                 )
                             }
