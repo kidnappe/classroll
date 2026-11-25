@@ -55,6 +55,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.classroll.photo.BuildConfig
 import com.classroll.photo.data.ArchiveItem
 import com.classroll.photo.model.PhotoItem
 import com.classroll.photo.scan.MediaPermission
@@ -318,7 +319,7 @@ fun AppShell(
                         onSaveSchedule = viewModel::updateSchedule,
                         skinId = skinId,
                         onSkinChange = onSkinChange,
-                        onAbout = { notify("课页 0.3.10 · 识别与归档均已接入；归档只复制，不移动、不删除原图") },
+                        onAbout = { notify("课页 ${BuildConfig.VERSION_NAME} · 识别与归档均已接入；归档只复制，不移动、不删除原图") },
                     )
                 }
             } else {

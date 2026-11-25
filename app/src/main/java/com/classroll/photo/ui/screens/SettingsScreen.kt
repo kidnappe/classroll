@@ -52,6 +52,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.classroll.photo.BuildConfig
 import com.classroll.photo.model.CourseSchedule
 import com.classroll.photo.model.SkipRange
 import com.classroll.photo.model.TimetableGroups
@@ -252,7 +253,7 @@ fun SettingsScreen(
                     icon = ClassrollIcons.File,
                     title = "课页 Classroll",
                     subtitle = "",
-                    value = "0.3.10",
+                    value = BuildConfig.VERSION_NAME,
                     onClick = onAbout,
                 )
             }

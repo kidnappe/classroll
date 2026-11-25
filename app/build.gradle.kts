@@ -20,13 +20,16 @@ android {
         applicationId = "com.classroll.photo"
         minSdk = 29
         targetSdk = 35
-        versionCode = 13
-        versionName = "0.3.10"
+        versionCode = 14
+        versionName = "1.0.0"
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            // 个人发布：复用本机 debug 签名，便于直接覆盖已安装的调试包。
+            // 正式对外分发请换成独立 release 签名。
+            signingConfig = signingConfigs.getByName("debug")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
@@ -38,6 +41,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
