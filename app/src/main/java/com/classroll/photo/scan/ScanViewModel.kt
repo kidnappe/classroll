@@ -103,7 +103,7 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun startFullScan(includeArchived: Boolean = false) {
+    fun startFullScan(includeArchived: Boolean = false, sessionIds: Set<String>? = null) {
         val schedule = mutableState.value.schedule
         if (schedule == null) {
             mutableState.update { it.copy(notice = "请先在设置里导入课程表 JSON") }
@@ -135,7 +135,12 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
             val includeShared = mutableState.value.includeSharedImages
             val archivedIds = if (includeArchived) emptySet() else archiveIndexStore.archivedSourceIds()
             val mediaPhotos = mediaRepository.query(schedule, now)
-            val sessions = schedule.sessions(schedule.semesterStart, now.toLocalDate())
+            val allSessions = schedule.sessions(schedule.semesterStart, now.toLocalDate())
+            val sessions = if (sessionIds == null) allSessions else allSessions.filter { it.id in sessionIds }
+            if (sessions.isEmpty()) {
+                mutableState.update { it.copy(notice = "这节课还没有可扫描的时间窗") }
+                return@startJob
+            }
             val groups = PhotoTimeMatcher.buildGroups(sessions)
             var timeMatched = 0
             var archivedExcluded = 0

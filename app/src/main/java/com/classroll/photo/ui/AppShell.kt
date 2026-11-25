@@ -111,6 +111,8 @@ fun AppShell(
     var showTimetable by remember { mutableStateOf(false) }
     var showArchiveManager by remember { mutableStateOf(false) }
     var pendingIncludeArchived by remember { mutableStateOf(false) }
+    var pendingSessionIds by remember { mutableStateOf<Set<String>?>(null) }
+    var lastScanSessionIds by remember { mutableStateOf<Set<String>?>(null) }
     var photoViewer by remember { mutableStateOf<PhotoViewer?>(null) }
     var candidateViewer by remember { mutableStateOf<CandidateViewer?>(null) }
     var hasFullAccess by remember { mutableStateOf(MediaPermission.hasFullAccess(context)) }
@@ -130,7 +132,7 @@ fun AppShell(
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         hasFullAccess = MediaPermission.hasFullAccess(context)
         if (hasFullAccess) {
-            viewModel.startFullScan(pendingIncludeArchived)
+            viewModel.startFullScan(pendingIncludeArchived, pendingSessionIds)
         } else {
             notify("没有获得全部照片权限；可以改用手动选择照片识别")
         }
@@ -182,8 +184,10 @@ fun AppShell(
         }
     }
 
-    fun startFullScan(includeArchived: Boolean = false) {
+    fun startFullScan(includeArchived: Boolean = false, sessionIds: Set<String>? = null) {
         pendingIncludeArchived = includeArchived
+        pendingSessionIds = sessionIds
+        lastScanSessionIds = sessionIds
         flowStep = FlowStep.Scan
         flowOrigin = currentTab
         when {
@@ -192,7 +196,7 @@ fun AppShell(
                 openScheduleFilePicker()
             }
             !hasFullAccess -> permissionLauncher.launch(MediaPermission.requiredPermissions())
-            else -> viewModel.startFullScan(includeArchived)
+            else -> viewModel.startFullScan(includeArchived, sessionIds)
         }
     }
 
@@ -298,6 +302,8 @@ fun AppShell(
                         selectedCount = state.selectedIds.size,
                         candidateCount = state.photos.size,
                         onQuickScan = ::openScanFlow,
+                        onScanSession = { sessionId -> startFullScan(sessionIds = setOf(sessionId)) },
+                        onScanToday = { sessionIds -> startFullScan(sessionIds = sessionIds) },
                         onImport = { openScheduleFilePicker() },
                     )
                     AppTab.Library -> LibraryScreen(
@@ -343,7 +349,7 @@ fun AppShell(
                                 onStartFullScan = { startFullScan() },
                                 onRescanAll = { startFullScan(true) },
                                 onCancel = viewModel::cancelScan,
-                                onRescan = { startFullScan() },
+                                onRescan = { startFullScan(sessionIds = lastScanSessionIds) },
                                 onViewResults = { flowStep = FlowStep.Confirm },
                             )
                             FlowStep.Confirm -> ConfirmScreen(
@@ -382,7 +388,7 @@ fun AppShell(
                                     currentTab = AppTab.Courses
                                     flowOrigin = AppTab.Courses
                                 },
-                                onRescan = { flowStep = FlowStep.Scan },
+                                onRescan = { startFullScan(sessionIds = lastScanSessionIds) },
                             )
                         }
                     }

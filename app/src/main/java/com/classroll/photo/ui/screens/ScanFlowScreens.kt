@@ -572,6 +572,15 @@ fun ResultScreen(
                     archiving -> "正在归档"
                     else -> "识别完成"
                 },
+                trailing = if (finished) {
+                    {
+                        TextButton(onClick = onRescan) {
+                            Text("再次扫描", style = MaterialTheme.typography.labelLarge)
+                        }
+                    }
+                } else {
+                    null
+                },
             )
         }
         item {
@@ -708,7 +717,6 @@ fun ResultScreen(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (finished) {
                     PrimaryButton("查看归档相册", onViewLibrary, Modifier.fillMaxWidth(), icon = ClassrollIcons.FolderCheck)
-                    SecondaryButton("重新扫描", onRescan, Modifier.fillMaxWidth(), icon = ClassrollIcons.Refresh)
                     SecondaryButton("回到课程", onBackHome, Modifier.fillMaxWidth(), icon = ClassrollIcons.Book)
                 } else if (!archiving) {
                     PrimaryButton("返回确认", onBackConfirm, Modifier.fillMaxWidth(), icon = ClassrollIcons.ArrowLeft)

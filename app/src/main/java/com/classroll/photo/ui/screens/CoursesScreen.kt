@@ -23,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -85,6 +86,8 @@ fun CoursesScreen(
     selectedCount: Int,
     candidateCount: Int,
     onQuickScan: () -> Unit,
+    onScanSession: (String) -> Unit,
+    onScanToday: (Set<String>) -> Unit,
     onImport: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -99,7 +102,8 @@ fun CoursesScreen(
     val now = nowDateTime.toLocalTime()
     val tomorrow = today.plusDays(1)
     val todayAll = schedule?.sessions(today, today).orEmpty()
-    val todaySessions = todayAll.filter { !now.isAfter(it.end.toLocalTime()) }
+    val todaySessions = todayAll
+    val dayFinished = todayAll.isNotEmpty() && todayAll.all { now.isAfter(it.end.toLocalTime()) }
     val tomorrowSessions = schedule?.sessions(tomorrow, tomorrow).orEmpty()
     val weekStart = today.with(DayOfWeek.MONDAY)
     val weekEnd = weekStart.plusDays(6)
@@ -148,13 +152,29 @@ fun CoursesScreen(
                     Text("还没有导入课程表", style = MaterialTheme.typography.titleMedium)
                 }
             }
-        } else if (todaySessions.isEmpty()) {
-            item { EmptyLessonHint(if (todayAll.isEmpty()) "今天没有课" else "今天的课已结束") }
+        } else if (todayAll.isEmpty()) {
+            item { EmptyLessonHint("今天没有课") }
         } else {
-            items(todaySessions.size) { index ->
-                val session = todaySessions[index]
+            items(todayAll.size) { index ->
+                val session = todayAll[index]
                 val course = schedule.courses.firstOrNull { it.id == session.courseId }
-                TodaySessionCard(session, course?.teacher.orEmpty(), courseColor(session.courseName), now)
+                TodaySessionCard(
+                    session = session,
+                    teacher = course?.teacher.orEmpty(),
+                    color = courseColor(session.courseName),
+                    now = now,
+                    onScan = { onScanSession(session.id) },
+                )
+            }
+            if (dayFinished) {
+                item {
+                    SecondaryButton(
+                        text = "扫描本日课程",
+                        onClick = { onScanToday(todayAll.map { it.id }.toSet()) },
+                        icon = ClassrollIcons.Scan,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
         }
 
@@ -298,6 +318,7 @@ private fun TodaySessionCard(
     teacher: String,
     color: Color,
     now: LocalTime,
+    onScan: () -> Unit,
 ) {
     val status = when {
         now.isBefore(session.start.toLocalTime()) -> "待开始"
@@ -345,6 +366,16 @@ private fun TodaySessionCard(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(top = 2.dp),
                 )
+            }
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.End,
+        ) {
+            TextButton(onClick = onScan) {
+                Icon(ClassrollIcons.Scan, contentDescription = null, modifier = Modifier.size(15.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("扫描本节课", style = MaterialTheme.typography.labelMedium)
             }
         }
         Box(modifier = Modifier.fillMaxWidth().height(3.dp).background(color))
