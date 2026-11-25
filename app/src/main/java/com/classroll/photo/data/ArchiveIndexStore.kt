@@ -10,6 +10,14 @@ import org.json.JSONObject
 import java.io.File
 import java.time.LocalDate
 
+data class ArchiveAddTarget(
+    val term: String,
+    val course: String,
+    val week: Int,
+    val date: String,
+    val sessionLabel: String,
+)
+
 data class ArchiveIndexEntry(
     val sourceId: Long,
     val uri: String,

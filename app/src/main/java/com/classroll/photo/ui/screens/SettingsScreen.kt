@@ -276,7 +276,7 @@ fun SettingsScreen(
                 )
                 SettingDivider()
                 SettingRow(
-                    icon = ClassrollIcons.Code,
+                    icon = ClassrollIcons.Github,
                     title = "GitHub 源码",
                     subtitle = "",
                     value = "kidnappe/classroll",

@@ -32,7 +32,20 @@ object ClassrollIcons {
     val Alert = strokeIcon("Alert", "M12 3.8 21 20H3L12 3.8Z", "M12 9v5M12 17.2v.1")
     val Eye = strokeIcon("Eye", "M2.8 12S6.3 5.8 12 5.8 21.2 12 21.2 12 17.7 18.2 12 18.2 2.8 12 2.8 12Z", "M14.7 12a2.7 2.7 0 1 1-5.4 0 2.7 2.7 0 0 1 5.4 0Z")
     val Plus = strokeIcon("Plus", "M12 5v14M5 12h14")
+    val AddPhoto = strokeIcon(
+        "AddPhoto",
+        "M8 3H4C3.45 3 3 3.45 3 4V8",
+        "M8 21H4C3.45 21 3 20.55 3 20V16",
+        "M16 21H20C20.55 21 21 20.55 21 20V16",
+        "M16 3H20C20.55 3 21 3.45 21 4V8",
+        "M16 12H8",
+        "M12 16V8",
+    )
     val Code = strokeIcon("Code", "m9 8-4 4 4 4", "M15 8l4 4-4 4")
+    val Github = strokeIcon(
+        "Github",
+        "M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22",
+    )
     val Calendar = strokeIcon("Calendar", "M4.5 6.5h15v13h-15z", "M4.5 10.5h15", "M8.2 4v4M15.8 4v4")
 
     private fun strokeIcon(name: String, vararg paths: String): ImageVector {

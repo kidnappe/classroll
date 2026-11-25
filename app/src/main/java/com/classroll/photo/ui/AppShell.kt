@@ -2,6 +2,7 @@ package com.classroll.photo.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -61,6 +62,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.classroll.photo.BuildConfig
+import com.classroll.photo.data.ArchiveAddTarget
 import com.classroll.photo.data.ArchiveItem
 import com.classroll.photo.model.PhotoItem
 import com.classroll.photo.scan.MediaPermission
@@ -114,6 +116,7 @@ fun AppShell(
     var showArchiveManager by remember { mutableStateOf(false) }
     var pendingIncludeArchived by remember { mutableStateOf(false) }
     var pendingSessionIds by remember { mutableStateOf<Set<String>?>(null) }
+    var pendingAddTarget by remember { mutableStateOf<ArchiveAddTarget?>(null) }
     var lastScanSessionIds by remember { mutableStateOf<Set<String>?>(null) }
     var photoViewer by remember { mutableStateOf<PhotoViewer?>(null) }
     var candidateViewer by remember { mutableStateOf<CandidateViewer?>(null) }
@@ -158,6 +161,11 @@ fun AppShell(
     }
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) viewModel.exportIndex(uri)
+    }
+    val addPhotosLauncher = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
+        val target = pendingAddTarget
+        pendingAddTarget = null
+        if (target != null && uris.isNotEmpty()) viewModel.addArchivedPhotos(target, uris)
     }
 
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -236,6 +244,8 @@ fun AppShell(
 
     val quickMode = when {
         state.progress.running -> QuickScanMode.Scanning
+        state.archive != null && state.archiveDone > 0 -> QuickScanMode.ArchiveDone
+        state.done && state.photos.isNotEmpty() && state.selectedIds.isNotEmpty() -> QuickScanMode.Resume
         state.done && state.photos.isNotEmpty() -> QuickScanMode.Rescan
         else -> QuickScanMode.Scan
     }
@@ -311,7 +321,9 @@ fun AppShell(
                         quickMode = quickMode,
                         selectedCount = state.selectedIds.size,
                         candidateCount = state.photos.size,
+                        archiveDone = state.archiveDone,
                         onQuickScan = ::openScanFlow,
+                        onScanNew = { startFullScan() },
                         onScanSession = { sessionId -> startFullScan(sessionIds = setOf(sessionId)) },
                         onScanToday = { sessionIds -> startFullScan(sessionIds = sessionIds) },
                         onImport = { openScheduleFilePicker() },
@@ -327,6 +339,12 @@ fun AppShell(
                             photoViewer = PhotoViewer(if (all.isEmpty()) photos else all, start)
                         },
                         onRemovePhotos = viewModel::deleteArchivedItems,
+                        onAddPhotos = { target ->
+                            pendingAddTarget = target
+                            addPhotosLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                            )
+                        },
                     )
                     AppTab.Settings -> SettingsScreen(
                         schedule = state.schedule,

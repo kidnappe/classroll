@@ -68,7 +68,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
-enum class QuickScanMode { Scan, Scanning, Resume, Rescan }
+enum class QuickScanMode { Scan, Scanning, Resume, Rescan, ArchiveDone }
 
 private fun weekdayLabel(value: Int): String = listOf("一", "二", "三", "四", "五", "六", "日")[value - 1]
 
@@ -85,7 +85,9 @@ fun CoursesScreen(
     quickMode: QuickScanMode,
     selectedCount: Int,
     candidateCount: Int,
+    archiveDone: Int,
     onQuickScan: () -> Unit,
+    onScanNew: () -> Unit,
     onScanSession: (String) -> Unit,
     onScanToday: (Set<String>) -> Unit,
     onImport: () -> Unit,
@@ -131,7 +133,7 @@ fun CoursesScreen(
                     },
             )
         }
-        item { QuickScanCard(quickMode, selectedCount, candidateCount, onQuickScan) }
+        item { QuickScanCard(quickMode, selectedCount, candidateCount, archiveDone, onQuickScan, onScanNew) }
 
         item {
             SectionHeading(
@@ -241,27 +243,37 @@ private fun EmptyLessonHint(text: String) {
 }
 
 @Composable
-private fun QuickScanCard(mode: QuickScanMode, selectedCount: Int, candidateCount: Int, onClick: () -> Unit) {
+private fun QuickScanCard(
+    mode: QuickScanMode,
+    selectedCount: Int,
+    candidateCount: Int,
+    archiveDone: Int,
+    onClick: () -> Unit,
+    onScanNew: () -> Unit,
+) {
     val lineColor = PaperLine
     val title = when (mode) {
         QuickScanMode.Scan -> if (candidateCount > 0) "$candidateCount 张已识别，等待确认" else "开始识别课程照片"
-        QuickScanMode.Scanning -> "正在本机识别…"
+        QuickScanMode.Scanning -> if (candidateCount > 0) "正在识别，已筛出 $candidateCount 张" else "正在读取相册…"
         QuickScanMode.Resume -> "$selectedCount 张已勾选，等待确认"
         QuickScanMode.Rescan -> if (candidateCount > 0) "$candidateCount 张候选可继续查看" else "本轮识别完成"
+        QuickScanMode.ArchiveDone -> "已归档 $archiveDone 张，可继续扫描新增"
     }
     val action = when (mode) {
         QuickScanMode.Scan -> "去扫描"
         QuickScanMode.Scanning -> "查看进度"
         QuickScanMode.Resume -> "继续确认"
         QuickScanMode.Rescan -> "查看结果"
+        QuickScanMode.ArchiveDone -> "扫描新增"
     }
+    val handleClick = if (mode == QuickScanMode.ArchiveDone) onScanNew else onClick
 
     val skin = LocalSkin.current
     val hard = skin.hardShadow
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(onClick = handleClick)
             .then(if (hard != null) Modifier.skinShadow(6.dp, .10f, .26f, MaterialTheme.shapes.medium) else Modifier),
         shape = MaterialTheme.shapes.medium,
         color = if (hard != null) Color.White else Color.Transparent,

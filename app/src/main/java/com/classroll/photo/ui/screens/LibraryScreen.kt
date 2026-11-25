@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -48,6 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.classroll.photo.data.ArchiveAddTarget
 import com.classroll.photo.data.ArchiveItem
 import com.classroll.photo.ui.ClassrollCard
 import com.classroll.photo.ui.ClassrollIcons
@@ -70,6 +72,7 @@ fun LibraryScreen(
     onScan: () -> Unit,
     onOpenPhotos: (List<ArchiveItem>, Int) -> Unit,
     onRemovePhotos: (Set<String>) -> Unit,
+    onAddPhotos: (ArchiveAddTarget) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var mode by remember { mutableStateOf(LibraryMode.Week) }
@@ -179,6 +182,17 @@ fun LibraryScreen(
                                     selectMode = true
                                     selectedUris = selectedUris + item.uri
                                 },
+                                onAdd = {
+                                    onAddPhotos(
+                                        ArchiveAddTarget(
+                                            term = key.first,
+                                            course = sessionKey.first,
+                                            week = week,
+                                            date = sessionKey.second?.toString().orEmpty(),
+                                            sessionLabel = "",
+                                        ),
+                                    )
+                                },
                             )
                         }
                     }
@@ -218,6 +232,17 @@ fun LibraryScreen(
                                 onEnterSelect = { item ->
                                     selectMode = true
                                     selectedUris = selectedUris + item.uri
+                                },
+                                onAdd = {
+                                    onAddPhotos(
+                                        ArchiveAddTarget(
+                                            term = key.first,
+                                            course = key.second,
+                                            week = sessionKey.first,
+                                            date = sessionKey.second?.toString().orEmpty(),
+                                            sessionLabel = "",
+                                        ),
+                                    )
                                 },
                             )
                         }
@@ -374,13 +399,29 @@ private fun SessionBlock(
     onOpen: (Int) -> Unit,
     onToggleSelect: (ArchiveItem) -> Unit,
     onEnterSelect: (ArchiveItem) -> Unit,
+    onAdd: () -> Unit,
 ) {
     val missing = photos.count { !it.available }
     val skin = LocalSkin.current
     val checkShape = if (skin.hardShadow != null) RoundedCornerShape(0.dp) else CircleShape
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f, fill = false),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            IconButton(onClick = onAdd, modifier = Modifier.size(30.dp)) {
+                Icon(
+                    ClassrollIcons.AddPhoto,
+                    contentDescription = "添加照片",
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Spacer(Modifier.weight(1f))
             Text("${photos.size} 张", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if (subtitle.isNotBlank()) {

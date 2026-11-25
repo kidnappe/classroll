@@ -1,9 +1,13 @@
 package com.classroll.photo.scan
 
 import android.app.Application
+import android.content.ContentUris
 import android.net.Uri
+import android.provider.MediaStore
+import android.provider.OpenableColumns
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.classroll.photo.data.ArchiveAddTarget
 import com.classroll.photo.data.ArchiveEntry
 import com.classroll.photo.data.BuiltinTimetables
 import com.classroll.photo.data.ArchiveIndexEntry
@@ -550,6 +554,40 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
                     mutableState.update { it.copy(archiving = false, notice = "归档失败：${error.message ?: "未知错误"}") }
                 },
             )
+        }
+    }
+
+    /** 手动选择图片加入指定归档条目；只登记索引，不复制文件。 */
+    fun addArchivedPhotos(target: ArchiveAddTarget, uris: List<Uri>) {
+        if (uris.isEmpty()) return
+        viewModelScope.launch {
+            val resolver = getApplication<Application>().contentResolver
+            val entries = uris.mapNotNull { uri ->
+                val mediaUri = runCatching { MediaStore.getMediaUri(getApplication(), uri) }.getOrNull() ?: uri
+                val id = runCatching { ContentUris.parseId(mediaUri) }.getOrNull()?.takeIf { it > 0 }
+                    ?: return@mapNotNull null
+                val name = resolver.query(mediaUri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+                    ?.use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else null }
+                    ?: "IMG_$id"
+                ArchiveIndexEntry(
+                    sourceId = id,
+                    uri = mediaUri.toString(),
+                    displayName = name,
+                    term = target.term,
+                    course = target.course,
+                    week = target.week,
+                    date = target.date,
+                    sessionLabel = target.sessionLabel,
+                    addedAt = LocalDateTime.now().toString(),
+                )
+            }
+            if (entries.isEmpty()) {
+                mutableState.update { it.copy(notice = "没有读取到可用的图片") }
+                return@launch
+            }
+            archiveIndexStore.addAll(entries)
+            refreshLibrary()
+            mutableState.update { it.copy(notice = "已添加 ${entries.size} 张到 ${target.course}") }
         }
     }
 
