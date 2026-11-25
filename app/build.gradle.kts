@@ -22,9 +22,19 @@ android {
         targetSdk = 35
         versionCode = 17
         versionName = "1.0.3"
+
+        // 发布包只带手机用到的 ABI；模拟器用的 x86/x86_64 仅在 debug 构建里保留。
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+        }
     }
 
     buildTypes {
+        debug {
+            ndk {
+                abiFilters += listOf("x86_64", "x86")
+            }
+        }
         release {
             isMinifyEnabled = false
             // 个人发布：复用本机 debug 签名，便于直接覆盖已安装的调试包。
