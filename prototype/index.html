@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ece5d6">
+<title>课片 Classroll · App UI 原型</title>
+<link rel="stylesheet" href="styles.css?v=0.3.13">
+</head>
+<body data-theme="paper" data-screen="courses">
+
+<!-- ============ icon sprite (IconPark-style line icons) ============ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-logo" viewBox="0 0 32 32">
+    <rect x="12" y="3.6" width="14.5" height="19.5" rx="3.6" transform="rotate(9 19.2 13.3)" fill="none" stroke="currentColor" stroke-width="2" opacity=".3"/>
+    <rect x="8.2" y="6.2" width="14.5" height="19.5" rx="3.6" transform="rotate(-6 15.4 16)" fill="none" stroke="currentColor" stroke-width="2" opacity=".55"/>
+    <rect x="5" y="7.6" width="17" height="21" rx="4.4" fill="currentColor"/>
+    <circle cx="16.8" cy="14.8" r="2.5" fill="var(--logo-hole)"/>
+    <path d="M8.4 23.6h8" stroke="var(--logo-hole)" stroke-width="1.7" stroke-linecap="round" opacity=".72"/>
+  </symbol>
+  <symbol id="i-book" viewBox="0 0 24 24">
+    <path d="M4.5 6.2A2.7 2.7 0 0 1 7.2 3.5H19.5v17H7.2a2.7 2.7 0 0 1-2.7-2.7V6.2Z"/>
+    <path d="M4.5 17.6a2.7 2.7 0 0 1 2.7-2.7h12.3"/>
+    <path d="M8.5 7.2h6.8M8.5 10.4h4.6"/>
+  </symbol>
+  <symbol id="i-scan" viewBox="0 0 24 24">
+    <path d="M4 8.2V5.7A1.7 1.7 0 0 1 5.7 4h2.5M15.8 4h2.5A1.7 1.7 0 0 1 20 5.7v2.5M20 15.8v2.5a1.7 1.7 0 0 1-1.7 1.7h-2.5M8.2 20H5.7A1.7 1.7 0 0 1 4 18.3v-2.5"/>
+    <path d="M3.5 12h17"/>
+  </symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24">
+    <rect x="3.7" y="3.7" width="7" height="7" rx="2.2"/>
+    <rect x="13.3" y="3.7" width="7" height="7" rx="2.2"/>
+    <rect x="3.7" y="13.3" width="7" height="7" rx="2.2"/>
+    <rect x="13.3" y="13.3" width="7" height="7" rx="2.2"/>
+  </symbol>
+  <symbol id="i-folder-check" viewBox="0 0 24 24">
+    <path d="M3.5 7.2A2.2 2.2 0 0 1 5.7 5h4l2 2.4h6.6a2.2 2.2 0 0 1 2.2 2.2v8.2a2.2 2.2 0 0 1-2.2 2.2H5.7a2.2 2.2 0 0 1-2.2-2.2V7.2Z"/>
+    <path d="m8.8 13.6 2.2 2.2 4.4-4.6"/>
+  </symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24">
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
+    <circle cx="12" cy="12" r="3"/>
+  </symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m4.8 12.6 4.6 4.6L19.4 7"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5.5 6.5 6.5L9 18.5"/></symbol>
+  <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M4 12h15M14 6.8l5.2 5.2-5.2 5.2"/></symbol>
+  <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M20 12H5M10 6.8 4.8 12l5.2 5.2"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24">
+    <path d="M4.5 15.5v3.3a1.7 1.7 0 0 0 1.7 1.7h11.6a1.7 1.7 0 0 0 1.7-1.7v-3.3"/>
+    <path d="M12 16V3.8M7.6 8.2 12 3.8l4.4 4.4"/>
+  </symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24">
+    <path d="M12 3.5c.5 4.3 2.2 6 6.5 6.5-4.3.5-6 2.2-6.5 6.5-.5-4.3-2.2-6-6.5-6.5 4.3-.5 6-2.2 6.5-6.5Z"/>
+    <path d="M18.6 16.2c.2 1.7.9 2.4 2.6 2.6-1.7.2-2.4.9-2.6 2.6-.2-1.7-.9-2.4-2.6-2.6 1.7-.2 2.4-.9 2.6-2.6Z"/>
+  </symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24">
+    <path d="M12 3.2 20 6v6.1c0 5-3.3 7.9-8 9.7-4.7-1.8-8-4.7-8-9.7V6l8-2.8Z"/>
+    <path d="m8.7 12.2 2.2 2.2 4.4-4.5"/>
+  </symbol>
+  <symbol id="i-image" viewBox="0 0 24 24">
+    <rect x="3.5" y="4.5" width="17" height="15" rx="2.6"/>
+    <circle cx="8.7" cy="9.5" r="1.6"/>
+    <path d="m4.8 17.2 4.6-4.3 3.2 2.8 2.7-2.6 3.9 3.7"/>
+  </symbol>
+  <symbol id="i-file" viewBox="0 0 24 24">
+    <path d="M6 3.8h7.2l4.8 4.7v11.7H6z"/><path d="M13.2 3.8v4.8H18M9 12h6M9 15.4h6M9 8.6h1.8"/>
+  </symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M8.2 5.6 19 12 8.2 18.4z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24">
+    <path d="M20 5v6h-6M4 19v-6h6"/>
+    <path d="M18.5 11A7 7 0 0 0 6.4 6.7M5.5 13A7 7 0 0 0 17.6 17.3"/>
+  </symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24">
+    <path d="M4.5 7h15M9 7V4.8h6V7M6.8 7l.8 12.2h8.8L17.2 7M10.2 10.5v5.6M13.8 10.5v5.6"/>
+  </symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3.1 1.9"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21c4-4.1 6.2-7.2 6.2-10.2A6.2 6.2 0 0 0 5.8 10.8C5.8 13.8 8 16.9 12 21Z"/><circle cx="12" cy="10.5" r="2.3"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="18.5" cy="12" r="1.5" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.8 21 20H3L12 3.8Z"/><path d="M12 9v5M12 17.2v.1"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.8 12S6.3 5.8 12 5.8 21.2 12 21.2 12 17.7 18.2 12 18.2 2.8 12 2.8 12Z"/><circle cx="12" cy="12" r="2.7"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8.2h3l1.4-2.4h7.2L17 8.2h3v10.3H4z"/><circle cx="12" cy="13" r="3.4"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.3"/><path d="m15.5 15.5 4.5 4.5"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3.5 8.5 4.4L12 12.3 3.5 7.9z"/><path d="m4.5 12 7.5 3.9 7.5-3.9M4.5 16.1l7.5 3.9 7.5-3.9"/></symbol>
+</svg>
+
+<div class="backdrop" aria-hidden="true">
+  <div class="blob blob-a"></div>
+  <div class="blob blob-b"></div>
+  <div class="bloom"><i></i><i></i><i></i><i></i></div>
+  <div class="ghost ghost-paper">课</div>
+  <div class="ghost ghost-mono">ARCHIVE</div>
+  <div class="ghost ghost-ember">归位</div>
+  <div class="vignette"></div>
+  <div class="grain"></div>
+</div>
+
+<header class="topbar">
+  <div class="brand-mini">
+    <span class="logo"><svg><use href="#i-logo"/></svg></span>
+    <b>课片</b><span class="en">CLASSROLL</span>
+    <span class="badge">UI PROTOTYPE 0.3</span>
+  </div>
+  <div class="theme-switch" role="group" aria-label="切换视觉方向">
+    <button type="button" data-set-theme="paper" class="active" aria-pressed="true">
+      <i style="--dot:#f2e7cc"></i><span class="full">纸上笔记</span><span class="short">纸</span>
+    </button>
+    <button type="button" data-set-theme="mono" aria-pressed="false">
+      <i style="--dot:#f5f5f0"></i><span class="full">超黑</span><span class="short">黑</span>
+    </button>
+    <button type="button" data-set-theme="ember" aria-pressed="false">
+      <i style="--dot:#ff4d00"></i><span class="full">橙焰</span><span class="short">橙</span>
+    </button>
+  </div>
+  <div class="top-actions">
+    <button type="button" class="btn btn-primary btn-top" id="autoDemo">
+      <svg class="icon"><use href="#i-play"/></svg><span>自动演示</span>
+    </button>
+    <button type="button" class="icon-btn" id="resetDemo" aria-label="重置演示" title="重置演示">
+      <svg class="icon"><use href="#i-refresh"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="stage">
+  <aside class="rail rail-left">
+    <p class="rail-kicker"><span class="line"></span>APP PROTOTYPE · 2026.11</p>
+    <h1>课程照片，<br><em>自动归位。</em></h1>
+    <p class="desc">按课程表的时间窗扫描相册，把板书、笔记、课件照片复制进对应课程相册。本地处理，不联网，原图不动。</p>
+
+    <div class="rail-label">视觉方向 <span>3 SETS</span></div>
+    <button type="button" class="dir-card active" data-set-theme="paper">
+      <span class="swatches"><i style="background:#f4ecd9"></i><i style="background:#1c1a15"></i><i style="background:#ffe066"></i></span>
+      <span class="dir-info"><b>A · 纸上笔记</b><small>奶油纸、荧光笔、手写批注</small></span>
+      <span class="dir-check"><svg class="icon"><use href="#i-check"/></svg></span>
+    </button>
+    <button type="button" class="dir-card" data-set-theme="mono">
+      <span class="swatches"><i style="background:#0b0b0b"></i><i style="background:#f5f5f0"></i><i style="background:#b6f09c"></i></span>
+      <span class="dir-info"><b>B · 超黑</b><small>Superdesign 式黑场、大字、克制动效</small></span>
+      <span class="dir-check"><svg class="icon"><use href="#i-check"/></svg></span>
+    </button>
+    <button type="button" class="dir-card" data-set-theme="ember">
+      <span class="swatches"><i style="background:#0c0c0c"></i><i style="background:#ff4d00"></i><i style="background:#fff"></i></span>
+      <span class="dir-info"><b>C · 橙焰</b><small>Rare UI 式橙黑、超大粗体、弹跳</small></span>
+      <span class="dir-check"><svg class="icon"><use href="#i-check"/></svg></span>
+    </button>
+
+    <div class="rail-label" style="margin-top:16px">常驻页面 <span>3 TABS</span></div>
+    <ol class="flow">
+      <li><button type="button" data-nav="courses" class="active"><span class="n">01</span><span>课程 / 今日与学期</span><span>01</span></button></li>
+      <li><button type="button" data-nav="library"><span class="n">02</span><span>归档 / 课程相册库</span><span>02</span></button></li>
+      <li><button type="button" data-nav="settings"><span class="n">03</span><span>设置 / 课表与权限</span><span>03</span></button></li>
+    </ol>
+
+    <div class="rail-label" style="margin-top:18px">步骤演示 <span>3 STEPS</span></div>
+    <ol class="flow flow-steps">
+      <li><button type="button" data-demo-step="scan"><span class="n">1</span><span>扫描 / 进度与判定</span><span>1 / 3</span></button></li>
+      <li><button type="button" data-demo-step="confirm"><span class="n">2</span><span>确认 / 三档勾选</span><span>2 / 3</span></button></li>
+      <li><button type="button" data-demo-step="result"><span class="n">3</span><span>完成 / 归档结果</span><span>3 / 3</span></button></li>
+    </ol>
+    <p class="rail-foot">参考 UI / Rare UI · transitions.dev · 21st.dev · Superdesign · 纸质笔记手写感</p>
+  </aside>
+
+  <div class="device" id="device">
+    <div class="phone" id="phone">
+      <div class="phone-screen" id="phoneScreen">
+        <span class="punch" aria-hidden="true"></span>
+        <div class="statusbar">
+          <span class="time">10:24</span>
+          <div class="status-icons" aria-hidden="true">
+            <span class="sig"><i></i><i></i><i></i><i></i></span>
+            <svg class="wifi" viewBox="0 0 12 10" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><path d="M1 3.2a7.2 7.2 0 0 1 10 0M2.9 5.4a4.5 4.5 0 0 1 6.2 0"/><circle cx="6" cy="8" r=".8" fill="currentColor" stroke="none"/></svg>
+            <span class="battery"></span>
+          </div>
+        </div>
+        <div class="flow-chrome" id="flowChrome" aria-hidden="true">
+          <button type="button" class="flow-close" id="flowClose" aria-label="返回"><svg class="icon"><use href="#i-arrow-left"/></svg></button>
+          <div class="flow-track" aria-hidden="true">
+            <span data-flow-label="scan">扫描</span><i></i>
+            <span data-flow-label="confirm">确认</span><i></i>
+            <span data-flow-label="result">完成</span>
+          </div>
+          <span class="flow-count" id="flowCount">1 / 3</span>
+        </div>
+        <div class="screen-stack" id="screenStack">
+
+          <section class="screen is-active" data-screen="courses">
+            <div class="hero">
+              <span class="app-ghost" aria-hidden="true">W12</span>
+              <p class="eyebrow"><span class="dot"></span>2026 秋 · 第 12 周 · 周三</p>
+            </div>
+
+            <button type="button" class="quick-scan" id="quickScan" data-mode="scan">
+              <span class="qs-icon"><svg class="icon"><use href="#i-scan"/></svg></span>
+              <span class="qs-copy"><b id="quickTitle">34 张照片等待确认</b><small id="quickSub">本周 5 次课 · 预计 40 秒扫完</small></span>
+              <span class="qs-go"><span id="quickAction">去扫描</span><svg class="icon"><use href="#i-chevron"/></svg></span>
+            </button>
+
+            <div class="section-head"><h2 id="todayTitle">今天 · 周三</h2><span class="meta" id="todayMeta">1 节课</span></div>
+            <div id="todayClasses"></div>
+
+            <div class="section-head"><h2>本学期课程</h2></div>
+            <div class="course-row" data-open-album="高等数学" role="button" tabindex="0" style="--c:#d6542e">
+              <span class="course-swatch"></span>
+              <div class="course-info"><b>高等数学</b><small>周一 08:00–09:40 · 1–16 周 · 教三-201</small></div>
+              <span class="course-num">87 张</span><svg class="icon chev" style="width:12px;height:12px"><use href="#i-chevron"/></svg>
+            </div>
+            <div class="course-row" data-open-album="大学物理" role="button" tabindex="0" style="--c:#3564a8">
+              <span class="course-swatch"></span>
+              <div class="course-info"><b>大学物理</b><small>周三 10:00–11:40 · 1–8, 10–16 周 · 教二-105</small></div>
+              <span class="course-num">64 张</span><svg class="icon chev" style="width:12px;height:12px"><use href="#i-chevron"/></svg>
+            </div>
+            <div class="course-row" data-open-album="形势与政策" role="button" tabindex="0" style="--c:#2f6a4f">
+              <span class="course-swatch"></span>
+              <div class="course-info"><b>形势与政策</b><small>周五 14:00–15:40 · 单周 · 线上</small></div>
+              <span class="course-num">21 张</span><svg class="icon chev" style="width:12px;height:12px"><use href="#i-chevron"/></svg>
+            </div>
+            <div class="course-row" data-open-album="程序设计" role="button" tabindex="0" style="--c:#7b5aa6">
+              <span class="course-swatch"></span>
+              <div class="course-info"><b>程序设计</b><small>周三 14:00–15:40 · 1–16 周 · 机房 A302</small></div>
+              <span class="course-num">38 张</span><svg class="icon chev" style="width:12px;height:12px"><use href="#i-chevron"/></svg>
+            </div>
+
+            <button type="button" class="btn btn-ghost btn-block import-entry" id="openImport"><svg class="icon"><use href="#i-upload"/></svg>导入课程表 JSON</button>
+          </section>
+
+          <section class="screen" data-screen="scan" data-flow-screen="scan">
+            <div class="scan-head">
+              <div class="title-row">
+                <div>
+                  <p class="eyebrow"><span class="dot"></span>第一步 · 本机扫描</p>
+                  <h1 class="screen-title">扫描相册</h1>
+                </div>
+                <span class="privacy-chip"><svg class="icon"><use href="#i-shield"/></svg>本机离线</span>
+              </div>
+            </div>
+            <div class="scan-note"><span>相册索引 <b>2,184</b> 张</span><span>·</span><span>4 门课 / 64 个时间段</span></div>
+
+            <div class="scanner" id="scanner">
+              <div class="scan-float f1" id="scanFloat1"></div>
+              <div class="scan-float f2" id="scanFloat2"></div>
+              <div class="scan-float f3" id="scanFloat3"></div>
+              <div class="ring-wrap">
+                <span class="ring-ticks" aria-hidden="true"></span>
+                <svg class="ring-svg" viewBox="0 0 250 250" aria-hidden="true">
+                  <circle class="ring-track" cx="125" cy="125" r="104"/>
+                  <circle class="ring-bar" id="scanRing" cx="125" cy="125" r="104"/>
+                </svg>
+                <div class="scan-core">
+                  <svg class="icon done-mark" viewBox="0 0 24 24"><use href="#i-check"/></svg>
+                  <b class="num" id="scanNum">0</b>
+                  <span class="lbl" id="scanLabel">张已检查</span>
+                </div>
+              </div>
+            </div>
+            <div class="scan-total"><b>2,184</b> 张 · 预计 40 秒</div>
+
+            <ul class="scan-steps" id="scanSteps">
+              <li class="scan-step" data-state="pending" data-step="0">
+                <span class="step-ico">1</span>
+                <div class="step-txt"><b>读取相册索引</b></div>
+                <span class="step-state">待机</span>
+              </li>
+              <li class="scan-step" data-state="pending" data-step="1">
+                <span class="step-ico">2</span>
+                <div class="step-txt"><b>匹配课程时间段</b></div>
+                <span class="step-state">待机</span>
+              </li>
+              <li class="scan-step" data-state="pending" data-step="2">
+                <span class="step-ico">3</span>
+                <div class="step-txt"><b>粗筛：屏幕 / 人脸 / 指纹</b></div>
+                <span class="step-state">待机</span>
+              </li>
+              <li class="scan-step" data-state="pending" data-step="3">
+                <span class="step-ico">4</span>
+                <div class="step-txt"><b>文字识别细看存疑照片</b></div>
+                <span class="step-state">待机</span>
+              </li>
+            </ul>
+
+            <div class="scan-found" id="scanFound">
+              <div class="found-top"><span class="dot"></span><b>本周找到 34 张</b><span id="foundTime">用时 4.8s</span></div>
+              <div class="found-grid">
+                <div><b data-found="18">0</b><span>像课件</span></div>
+                <div><b data-found="6">0</b><span>存疑</span></div>
+                <div><b data-found="3">0</b><span>边界</span></div>
+                <div><b data-found="7">0</b><span>不像</span></div>
+              </div>
+            </div>
+
+            <div class="scan-actions">
+              <button type="button" class="btn btn-primary btn-block" id="scanBtn">
+                <svg class="icon"><use href="#i-scan"/></svg><span id="scanBtnLabel">开始扫描</span>
+              </button>
+              <button type="button" class="scan-again hidden" id="scanAgain">重新扫描</button>
+            </div>
+          </section>
+
+          <section class="screen" data-screen="confirm" data-flow-screen="confirm">
+            <div class="screen-head">
+              <div class="title-row">
+                <div>
+                  <p class="eyebrow"><span class="dot"></span>第二步 · 人工确认</p>
+                  <h1 class="screen-title">确认照片</h1>
+                </div>
+                <span class="count-hint">34 张候选</span>
+              </div>
+              <div class="segmented" id="segmented" role="tablist" aria-label="筛选判定档位">
+                <span class="seg-thumb" id="segThumb"></span>
+                <button type="button" data-filter="likely" class="active" role="tab" aria-selected="true">像课件 <b>18</b></button>
+                <button type="button" data-filter="doubtful" role="tab" aria-selected="false">存疑 <b>6</b></button>
+                <button type="button" data-filter="boundary" role="tab" aria-selected="false">边界 <b>3</b></button>
+                <button type="button" data-filter="unlike" role="tab" aria-selected="false">不像 <b>7</b></button>
+              </div>
+            </div>
+            <div id="photoGroups"></div>
+          </section>
+
+          <section class="screen" data-screen="result" data-flow-screen="result">
+            <div class="app-head">
+              <div>
+                <p class="eyebrow"><span class="dot"></span>第三步 · 完成</p>
+                <h1 class="screen-title">归档结果</h1>
+              </div>
+              <span class="privacy-chip"><svg class="icon"><use href="#i-shield"/></svg>只复制</span>
+            </div>
+
+            <div class="archive-hero" id="archiveHero">
+              <div class="success-ring">
+                <svg class="success-svg" viewBox="0 0 96 96" aria-hidden="true">
+                  <circle class="success-ring-track" cx="48" cy="48" r="42"/>
+                  <circle class="success-ring-bar" cx="48" cy="48" r="42"/>
+                  <path class="success-tick" d="M30 48.5 42.5 61 67 35.5"/>
+                </svg>
+              </div>
+              <h1>归档完成</h1>
+              <p id="archiveSub">18 张照片已复制到 2 个课程相册</p>
+              <div class="date-line" id="archiveDate">2026-11-25 · 10:24</div>
+            </div>
+
+            <div class="archive-stats">
+              <div><b id="archiveCount">0</b><span>复制张数</span></div>
+              <div><b id="archiveAlbums">0</b><span>课程相册</span></div>
+              <div><b id="archiveOriginals">0</b><span>原图改动</span></div>
+            </div>
+
+            <div class="folder-list" id="archiveFolders"></div>
+
+            <div class="guard-note">
+              <svg class="icon"><use href="#i-shield"/></svg>
+              <span><b>原图未移动</b></span>
+            </div>
+            <div class="archive-actions">
+              <button type="button" class="btn btn-primary btn-block" id="archiveView"><svg class="icon"><use href="#i-folder-check"/></svg>查看归档相册</button>
+              <button type="button" class="btn btn-ghost btn-block" id="archiveHome"><svg class="icon"><use href="#i-book"/></svg>回到课程</button>
+            </div>
+            <div class="confetti" id="confetti" aria-hidden="true"></div>
+          </section>
+
+          <section class="screen" data-screen="library">
+            <div class="app-head">
+              <div class="head-title-group">
+                <button type="button" class="icon-btn" data-goto="courses" aria-label="返回课程"><svg class="icon"><use href="#i-arrow-left"/></svg></button>
+                <div>
+                  <p class="eyebrow"><span class="dot"></span>课程 / 归档</p>
+                  <h1 class="screen-title">归档相册</h1>
+                </div>
+              </div>
+              <span class="privacy-chip"><svg class="icon"><use href="#i-shield"/></svg>只复制</span>
+            </div>
+
+            <div class="library-summary">
+              <div><b id="libCount">210</b><span>本学期已归档</span></div>
+              <div><b>4</b><span>课程相册</span></div>
+              <div><b id="libNew">0</b><span>本次新增</span></div>
+            </div>
+
+            <div class="section-head"><h2>课程相册</h2><button type="button" class="text-btn" id="libraryScan">扫描新照片</button></div>
+            <div class="album-grid" id="albumGrid"></div>
+          </section>
+
+          <section class="screen" data-screen="settings">
+            <div class="app-head">
+              <div>
+                <h1 class="screen-title">设置</h1>
+              </div>
+              <span class="privacy-chip"><svg class="icon"><use href="#i-shield"/></svg>本机</span>
+            </div>
+
+            <div class="settings-card">
+              <button type="button" class="settings-row" data-open-import>
+                <span class="settings-ico"><svg class="icon"><use href="#i-upload"/></svg></span>
+                <span class="settings-body"><b>课程表</b><small>2026 秋 · 4 门课 · 64 个时间段</small></span>
+                <span class="settings-value">已导入</span>
+                <svg class="icon chev"><use href="#i-chevron"/></svg>
+              </button>
+              <div class="settings-row">
+                <span class="settings-ico"><svg class="icon"><use href="#i-clock"/></svg></span>
+                <span class="settings-body"><b>学期与周次</b><small>第一周周一 2026-09-07</small></span>
+                <span class="settings-value">第 12 周</span>
+              </div>
+              <button type="button" class="settings-row" id="settingsBuffer">
+                <span class="settings-ico"><svg class="icon"><use href="#i-layers"/></svg></span>
+                <span class="settings-body"><b>缓冲时间</b><small>课前 10 分钟 / 课后 20 分钟</small></span>
+                <span class="settings-value">10 / 20</span>
+                <svg class="icon chev"><use href="#i-chevron"/></svg>
+              </button>
+              <button type="button" class="settings-row" id="settingsPermission">
+                <span class="settings-ico"><svg class="icon"><use href="#i-shield"/></svg></span>
+                <span class="settings-body"><b>相册权限</b><small>Android 14+ 需要“全部照片”</small></span>
+                <span class="settings-value done">全部照片</span>
+                <svg class="icon chev"><use href="#i-chevron"/></svg>
+              </button>
+            </div>
+
+            <div class="settings-card">
+              <div class="settings-row">
+                <span class="settings-ico"><svg class="icon"><use href="#i-folder-check"/></svg></span>
+                <span class="settings-body"><b>归档副本</b><small>Pictures/课程归档/ · 只占复制件空间</small></span>
+                <span class="settings-value" id="settingsStorage">1.2 GB</span>
+              </div>
+              <div class="settings-row">
+                <span class="settings-ico"><svg class="icon"><use href="#i-shield"/></svg></span>
+                <span class="settings-body"><b>网络权限</b><small>未申请，全部处理在本机</small></span>
+                <span class="settings-value">0</span>
+              </div>
+              <div class="settings-row">
+                <span class="settings-ico"><svg class="icon"><use href="#i-logo"/></svg></span>
+                <span class="settings-body"><b>课片 Classroll</b><small>UI 原型 0.3 · 2026.11</small></span>
+                <span class="settings-value">0.3</span>
+              </div>
+            </div>
+
+            <button type="button" class="btn btn-ghost btn-block" id="settingsImport"><svg class="icon"><use href="#i-upload"/></svg>导入课程表 JSON</button>
+            <p class="settings-foot">调课、停课：在确认页整组不归档。</p>
+          </section>
+        </div>
+
+        <div class="batch-bar" id="batchBar" aria-hidden="true" inert>
+          <button type="button" class="bulk" id="selectAll">全选</button>
+          <button type="button" class="bulk" id="invertSelect">反选</button>
+          <span class="batch-divider"></span>
+          <div class="batch-count"><b id="selectedCount">18</b><span>张已选 · 本周</span></div>
+          <button type="button" class="btn btn-primary batch-archive" id="archiveBtn">
+            <svg class="icon"><use href="#i-folder-check"/></svg>归档
+          </button>
+        </div>
+        <nav class="tabbar" id="tabbar" aria-label="主导航">
+          <button type="button" data-nav="courses" class="active"><svg class="icon"><use href="#i-book"/></svg><span>课程</span></button>
+          <button type="button" data-start-scan aria-label="扫描相册"><svg class="icon"><use href="#i-scan"/></svg><span>扫描</span></button>
+          <button type="button" data-nav="library"><svg class="icon"><use href="#i-folder-check"/></svg><span>归档</span></button>
+          <button type="button" data-nav="settings"><svg class="icon"><use href="#i-settings"/></svg><span>设置</span></button>
+        </nav>
+        <div class="toast" id="toast" role="status"><svg class="icon"><use href="#i-check"/></svg><span id="toastText">已保存</span></div>
+
+        <div class="overlay" id="importOverlay" aria-hidden="true" inert>
+          <div class="sheet" role="dialog" aria-modal="true" aria-label="导入课程表">
+            <div class="grabber"></div>
+            <div class="sheet-head">
+              <h3>导入课程表</h3>
+              <button type="button" class="icon-btn" data-close-import aria-label="关闭"><svg class="icon"><use href="#i-close"/></svg></button>
+            </div>
+            <p class="sub">粘贴或选择 JSON；开学日期填第一周周一。</p>
+            <pre class="json-block">{
+  <span class="k">"semesterStart"</span>: <span class="s">"2026-09-07"</span>,
+  <span class="k">"bufferBeforeMin"</span>: <span class="n">10</span>,
+  <span class="k">"bufferAfterMin"</span>: <span class="n">20</span>,
+  <span class="k">"courses"</span>: [
+    { <span class="k">"name"</span>: <span class="s">"高等数学"</span>, <span class="k">"weekday"</span>: <span class="n">1</span>,
+      <span class="k">"start"</span>: <span class="s">"08:00"</span>, <span class="k">"end"</span>: <span class="s">"09:40"</span>,
+      <span class="k">"weeks"</span>: <span class="s">"1-16"</span>, <span class="k">"room"</span>: <span class="s">"教三-201"</span> },
+    { <span class="k">"name"</span>: <span class="s">"大学物理"</span>, <span class="k">"weekday"</span>: <span class="n">3</span>,
+      <span class="k">"start"</span>: <span class="s">"10:00"</span>, <span class="k">"end"</span>: <span class="s">"11:40"</span>,
+      <span class="k">"weeks"</span>: <span class="s">"1-8,10-16"</span>, <span class="k">"room"</span>: <span class="s">"教二-105"</span> }
+  ]
+}</pre>
+            <div class="sheet-note"><svg class="icon"><use href="#i-shield"/></svg>只读本地文件 · 课程名会自动过滤非法路径字符</div>
+            <div class="sheet-actions">
+              <button type="button" class="btn btn-ghost" id="pickFile"><svg class="icon"><use href="#i-file"/></svg>选择文件</button>
+              <button type="button" class="btn btn-primary" id="confirmImport"><svg class="icon"><use href="#i-check"/></svg>导入 4 门课程</button>
+            </div>
+            <input type="file" id="fileInput" accept=".json,application/json" hidden>
+          </div>
+        </div>
+
+        <div class="overlay" id="draftOverlay" aria-hidden="true" inert>
+          <div class="sheet sheet-compact" role="dialog" aria-modal="true" aria-label="继续上次确认">
+            <div class="grabber"></div>
+            <div class="sheet-head">
+              <h3>还有 34 张没确认</h3>
+              <button type="button" class="icon-btn" data-close-draft aria-label="关闭"><svg class="icon"><use href="#i-close"/></svg></button>
+            </div>
+            <div class="draft-preview">
+              <span class="draft-dot"></span>
+              <div><b><span id="draftSelected">18</span> 张已勾选</b></div>
+            </div>
+            <div class="sheet-actions">
+              <button type="button" class="btn btn-ghost" id="draftRestart">重新扫描</button>
+              <button type="button" class="btn btn-primary" id="draftResume">继续确认</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="overlay" id="albumOverlay" aria-hidden="true" inert>
+          <div class="sheet album-sheet" role="dialog" aria-modal="true" aria-label="课程相册">
+            <div class="grabber"></div>
+            <div class="sheet-head">
+              <div>
+                <p class="eyebrow"><span class="dot"></span>课程相册</p>
+                <h3 id="albumTitle">高等数学</h3>
+              </div>
+              <button type="button" class="icon-btn" data-close-album aria-label="关闭"><svg class="icon"><use href="#i-close"/></svg></button>
+            </div>
+            <p class="sub" id="albumMeta">Pictures/课程归档/高等数学/ · 87 张</p>
+            <div class="album-photos" id="albumPhotos"></div>
+            <div class="sheet-note"><svg class="icon"><use href="#i-folder-check"/></svg><span id="albumPath">系统相册里会显示为「高等数学」</span></div>
+            <button type="button" class="btn btn-primary btn-block" id="albumOpenSystem"><svg class="icon"><use href="#i-image"/></svg>在系统相册打开</button>
+          </div>
+        </div>
+
+        <div class="viewer-layer" id="viewerLayer" aria-hidden="true" inert>
+          <div class="viewer-backdrop" data-close-viewer></div>
+          <div class="viewer" role="dialog" aria-modal="true" aria-label="照片详情">
+            <button type="button" class="viewer-close" id="viewerClose" aria-label="返回"><svg class="icon"><use href="#i-arrow-left"/></svg></button>
+            <div class="viewer-photo" id="viewerPhoto"></div>
+            <div class="viewer-body">
+              <div class="viewer-title-row">
+                <h3 id="viewerTitle">课堂照片</h3>
+                <span class="viewer-score">判定 <b id="viewerScore">96</b></span>
+              </div>
+              <p class="viewer-meta" id="viewerMeta">高等数学 · 第 12 次课 · 11月23日 08:06</p>
+              <div class="reason-grid" id="viewerReasons"></div>
+              <div class="viewer-actions">
+                <button type="button" class="btn btn-ghost" id="viewerReject"><svg class="icon"><use href="#i-trash"/></svg>设为不归档</button>
+                <button type="button" class="btn btn-primary" id="viewerKeep"><svg class="icon"><use href="#i-check"/></svg>保留这张</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="rail rail-right">
+    <div class="panel">
+      <div class="rail-label">MOTION RECIPE <span>05</span></div>
+      <div class="motion-row">
+        <span class="idx">01</span><div><b>标签滑轨</b><small>Tabs sliding · spring</small></div>
+        <span class="motion-vis mini-tabs"><i></i><i class="on"></i><i></i></span>
+      </div>
+      <div class="motion-row">
+        <span class="idx">02</span><div><b>数字鼓点</b><small>Number pop-in</small></div>
+        <span class="motion-vis mini-num">34</span>
+      </div>
+      <div class="motion-row">
+        <span class="idx">03</span><div><b>成功勾绘</b><small>Success check + confetti</small></div>
+        <span class="motion-vis mini-check"><svg class="icon"><use href="#i-check"/></svg></span>
+      </div>
+      <div class="motion-row">
+        <span class="idx">04</span><div><b>逐格入场</b><small>Stagger reveal</small></div>
+        <span class="motion-vis mini-grid"><i></i><i></i><i></i></span>
+      </div>
+      <div class="motion-row">
+        <span class="idx">05</span><div><b>大图展开</b><small>Scale + blur modal</small></div>
+        <span class="motion-vis mini-tabs" style="width:34px"><i style="width:9px"></i><i style="width:9px" class="on"></i></span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="rail-label">DESIGN BASELINE <span>V0.3</span></div>
+      <div class="spec-row"><span>图标</span><b>IconPark 线性</b></div>
+      <div class="spec-row"><span>真机字号</span><b>≥ 24sp</b></div>
+      <div class="spec-row"><span>原图策略</span><b>只复制</b></div>
+      <div class="spec-row"><span>网络权限</span><b>0</b></div>
+    </div>
+    <p class="rail-note">点右上「自动演示」走一遍扫描 → 确认 → 完成；底部三个 tab 是常驻目的地，扫描流程不占导航。</p>
+  </aside>
+
+  <p class="mobile-brief">三套视觉方向 · 顶部切换 · 点「自动演示」走完整流程</p>
+</main>
+
+<script src="app.js?v=0.3.13"></script>
+</body>
+</html>
