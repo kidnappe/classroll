@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/Android-10%2B-3DDC84?style=flat-square&logo=android&logoColor=white" alt="Android 10+" />
   <img src="https://img.shields.io/badge/Kotlin-JVM-7F52FF?style=flat-square&logo=kotlin&logoColor=white" alt="Kotlin" />
   <img src="https://img.shields.io/badge/Compose-Material%203-4285F4?style=flat-square&logo=android&logoColor=white" alt="Compose" />
-  <img src="https://img.shields.io/badge/version-1.0.5-D6542E?style=flat-square" alt="1.0.5" />
+  <img src="https://img.shields.io/badge/version-1.0.6-D6542E?style=flat-square" alt="1.0.6" />
   <img src="https://img.shields.io/badge/offline-local--only-2F6A4F?style=flat-square" alt="offline" />
 </p>
 

@@ -572,14 +572,10 @@ fun ResultScreen(
                     archiving -> "正在归档"
                     else -> "识别完成"
                 },
-                trailing = if (finished) {
-                    {
-                        TextButton(onClick = onRescan) {
-                            Text("再次扫描", style = MaterialTheme.typography.labelLarge)
-                        }
+                trailing = {
+                    TextButton(onClick = onRescan) {
+                        Text("再次扫描", style = MaterialTheme.typography.labelLarge)
                     }
-                } else {
-                    null
                 },
             )
         }

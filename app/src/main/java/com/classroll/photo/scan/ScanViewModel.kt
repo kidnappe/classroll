@@ -133,7 +133,11 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
             }
             val now = LocalDateTime.now()
             val includeShared = mutableState.value.includeSharedImages
-            val archivedIds = if (includeArchived) emptySet() else archiveIndexStore.archivedSourceIds()
+            val archivedEntries = if (includeArchived) emptyList() else archiveIndexStore.load()
+            val archivedIds = archivedEntries.mapTo(mutableSetOf()) { it.sourceId }
+            val archivedSessionKeys = archivedEntries
+                .filter { it.week > 0 && it.date.isNotBlank() }
+                .mapTo(mutableSetOf()) { "${it.course}|${it.week}|${it.date}" }
             val mediaPhotos = mediaRepository.query(schedule, now)
             val allSessions = schedule.sessions(schedule.semesterStart, now.toLocalDate())
             val sessions = if (sessionIds == null) allSessions else allSessions.filter { it.id in sessionIds }
@@ -144,6 +148,7 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
             val groups = PhotoTimeMatcher.buildGroups(sessions)
             var timeMatched = 0
             var archivedExcluded = 0
+            var sessionExcluded = 0
             val photos = withContext(Dispatchers.IO) {
                 mediaPhotos.mapNotNull { media ->
                     if (media.id in archivedIds) {
@@ -152,6 +157,11 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
                     }
                     val time = media.takenAt ?: media.addedAt
                     val match = PhotoTimeMatcher.matchPhoto(time, sessions) ?: return@mapNotNull null
+                    val sessionKey = "${match.session.courseName}|${match.session.week}|${match.session.start.toLocalDate()}"
+                    if (sessionKey in archivedSessionKeys) {
+                        sessionExcluded++
+                        return@mapNotNull null
+                    }
                     timeMatched++
                     val hasCameraExif = PhotoOrigin.needsExif(media.relativePath, media.displayName, includeShared) &&
                         exifReader.hasCameraExif(media.uri)
@@ -186,7 +196,8 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
                         photos.size,
                         "课程时间匹配完成：${photos.size} 张相机照片" +
                             (if (excluded > 0) "（排除 $excluded 张截图/非相机图片）" else "") +
-                            (if (archivedExcluded > 0) " · 跳过 $archivedExcluded 张已归档原图" else ""),
+                            (if (archivedExcluded > 0) " · 跳过 $archivedExcluded 张已归档原图" else "") +
+                            (if (sessionExcluded > 0) " · 跳过 $sessionExcluded 张已扫课程照片" else ""),
                         android.os.SystemClock.elapsedRealtime() - startedAt,
                     ),
                 )

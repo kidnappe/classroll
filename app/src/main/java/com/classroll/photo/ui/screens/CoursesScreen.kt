@@ -102,8 +102,8 @@ fun CoursesScreen(
     val now = nowDateTime.toLocalTime()
     val tomorrow = today.plusDays(1)
     val todayAll = schedule?.sessions(today, today).orEmpty()
-    val todaySessions = todayAll
-    val dayFinished = todayAll.isNotEmpty() && todayAll.all { now.isAfter(it.end.toLocalTime()) }
+    val todaySessions = todayAll.filter { !now.isAfter(it.end.toLocalTime()) }
+    val dayFinished = todayAll.isNotEmpty() && todaySessions.isEmpty()
     val tomorrowSessions = schedule?.sessions(tomorrow, tomorrow).orEmpty()
     val weekStart = today.with(DayOfWeek.MONDAY)
     val weekEnd = weekStart.plusDays(6)
@@ -152,20 +152,8 @@ fun CoursesScreen(
                     Text("还没有导入课程表", style = MaterialTheme.typography.titleMedium)
                 }
             }
-        } else if (todayAll.isEmpty()) {
-            item { EmptyLessonHint("今天没有课") }
-        } else {
-            items(todayAll.size) { index ->
-                val session = todayAll[index]
-                val course = schedule.courses.firstOrNull { it.id == session.courseId }
-                TodaySessionCard(
-                    session = session,
-                    teacher = course?.teacher.orEmpty(),
-                    color = courseColor(session.courseName),
-                    now = now,
-                    onScan = { onScanSession(session.id) },
-                )
-            }
+        } else if (todaySessions.isEmpty()) {
+            item { EmptyLessonHint(if (todayAll.isEmpty()) "今天没有课" else "今天的课已结束") }
             if (dayFinished) {
                 item {
                     SecondaryButton(
@@ -175,6 +163,18 @@ fun CoursesScreen(
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
+            }
+        } else {
+            items(todaySessions.size) { index ->
+                val session = todaySessions[index]
+                val course = schedule.courses.firstOrNull { it.id == session.courseId }
+                TodaySessionCard(
+                    session = session,
+                    teacher = course?.teacher.orEmpty(),
+                    color = courseColor(session.courseName),
+                    now = now,
+                    onScan = { onScanSession(session.id) },
+                )
             }
         }
 
