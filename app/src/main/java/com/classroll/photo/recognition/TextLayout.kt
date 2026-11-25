@@ -8,9 +8,7 @@ import kotlin.math.roundToInt
  * 从 OCR 结果还原文字版式。真机上 ML Kit 每个 line 给一个框，因此框数就是行数；
  * 用每行平均字数、短行比例和贴顶行比例区分“课件排版”和“应用界面/聊天记录”。
  *
- * 这份版式同时是识别规则和扫描记录的共用口径：
- * [com.classroll.photo.scan.ScanRecordSerializer] 会把这里算出的字段原样写进 scan-record.json，
- * 保证 App 落盘的记录和 PC 侧 `tools/make_scan_record.py` 的回放口径一致。
+ * 这份版式同时是识别规则的共用口径，PC 侧 `tools/` 的回放脚本也按同样字段计算。
  */
 data class TextLayout(
     val lineCount: Int,

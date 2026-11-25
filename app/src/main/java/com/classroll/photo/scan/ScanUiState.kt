@@ -26,14 +26,6 @@ data class ScanUiState(
     val filter: Verdict = Verdict.Likely,
     val source: ScanSource? = null,
     val notice: String? = null,
-    /** 本次扫描的落盘 ID；为空表示还没有开始扫描。 */
-    val scanId: String? = null,
-    /** 用户亲手点过/批量改过的照片；用于区分“默认勾选”和“人工确认”。 */
-    val touchedIds: Set<String> = emptySet(),
-    /** 勾选修订号，从 0 开始，每次人工变化 +1。 */
-    val recordRevision: Int = 0,
-    /** 最近一次成功写出的记录文件绝对路径，便于 adb pull 时定位。 */
-    val lastRecordPath: String? = null,
     /** 是否已经点过“完成”。 */
     val confirmed: Boolean = false,
     /** 打开后微信/QQ/分享目录的图片也参与识别；默认只扫描相机照片。 */

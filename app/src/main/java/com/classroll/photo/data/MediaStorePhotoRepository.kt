@@ -82,7 +82,7 @@ class MediaStorePhotoRepository(private val context: Context) {
         val zone = ZoneId.systemDefault()
         val now = LocalDateTime.now(zone)
         uris.mapIndexed { index, uri ->
-            var displayName = uri.lastPathSegment ?: "测试照片 ${index + 1}"
+            var displayName = uri.lastPathSegment ?: "照片 ${index + 1}"
             runCatching {
                 context.contentResolver.query(
                     uri,

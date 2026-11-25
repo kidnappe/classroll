@@ -49,6 +49,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -92,6 +94,8 @@ private sealed interface DialogState {
     data class Viewer(val photo: PhotoItem) : DialogState
 }
 
+private data class PhotoViewer(val photos: List<ArchiveItem>, val index: Int)
+
 @Composable
 fun AppShell(
     skinId: String,
@@ -106,7 +110,7 @@ fun AppShell(
     var showTimetable by remember { mutableStateOf(false) }
     var showArchiveManager by remember { mutableStateOf(false) }
     var pendingIncludeArchived by remember { mutableStateOf(false) }
-    var fullscreenItem by remember { mutableStateOf<ArchiveItem?>(null) }
+    var photoViewer by remember { mutableStateOf<PhotoViewer?>(null) }
     var activeDialog by remember { mutableStateOf<DialogState?>(null) }
     var hasFullAccess by remember { mutableStateOf(MediaPermission.hasFullAccess(context)) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -127,7 +131,7 @@ fun AppShell(
         if (hasFullAccess) {
             viewModel.startFullScan(pendingIncludeArchived)
         } else {
-            notify("没有获得全部照片权限；可以改用“选图测试识别”")
+            notify("没有获得全部照片权限；可以改用手动选择照片识别")
         }
     }
     val fileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -171,6 +175,7 @@ fun AppShell(
         flowOrigin = currentTab
         flowStep = when {
             state.progress.running -> FlowStep.Scan
+            state.archive != null -> FlowStep.Result
             state.done && state.photos.isNotEmpty() -> FlowStep.Confirm
             else -> FlowStep.Scan
         }
@@ -213,9 +218,8 @@ fun AppShell(
     }
 
     val pendingSchedule = state.pendingSchedule
-    BackHandler(enabled = pendingSchedule == null && (fullscreenItem != null || activeDialog != null || flowStep != null || showTimetable || showArchiveManager || currentTab == AppTab.Library)) {
+    BackHandler(enabled = pendingSchedule == null && (activeDialog != null || flowStep != null || showTimetable || showArchiveManager || currentTab == AppTab.Library)) {
         when {
-            fullscreenItem != null -> fullscreenItem = null
             activeDialog != null -> activeDialog = null
             showArchiveManager -> showArchiveManager = false
             showTimetable -> showTimetable = false
@@ -243,7 +247,7 @@ fun AppShell(
             }
         },
         bottomBar = {
-            if (fullscreenItem == null && pendingSchedule == null && !showTimetable && !showArchiveManager) {
+            if (photoViewer == null && pendingSchedule == null && !showTimetable && !showArchiveManager) {
                 BottomNavigation(
                     selectedTab = currentTab,
                     scanning = flowStep != null,
@@ -259,10 +263,7 @@ fun AppShell(
         Box(modifier = Modifier.fillMaxSize().padding(innerPadding).paperGrain()) {
             val currentFlowStep = flowStep
             val schedule = state.schedule
-            val fullscreen = fullscreenItem
-            if (fullscreen != null) {
-                FullscreenPhotoScreen(item = fullscreen, onBack = { fullscreenItem = null })
-            } else if (pendingSchedule != null) {
+            if (pendingSchedule != null) {
                 SchedulePreviewScreen(
                     initial = pendingSchedule,
                     onSave = { schedule ->
@@ -303,7 +304,7 @@ fun AppShell(
                         items = state.archiveItems,
                         added = state.archive?.copied ?: 0,
                         onScan = ::openScanFlow,
-                        onOpenPhoto = { fullscreenItem = it },
+                        onOpenPhotos = { photos, index -> photoViewer = PhotoViewer(photos, index) },
                     )
                     AppTab.Settings -> SettingsScreen(
                         schedule = state.schedule,
@@ -319,7 +320,7 @@ fun AppShell(
                         onSaveSchedule = viewModel::updateSchedule,
                         skinId = skinId,
                         onSkinChange = onSkinChange,
-                        onAbout = { notify("课页 ${BuildConfig.VERSION_NAME} · 识别与归档均已接入；归档只复制，不移动、不删除原图") },
+                        onAbout = { notify("课页 ${BuildConfig.VERSION_NAME} · 所有识别都在本机完成，归档只复制、不移动、不删除原图") },
                     )
                 }
             } else {
@@ -375,11 +376,25 @@ fun AppShell(
                                     currentTab = AppTab.Courses
                                     flowOrigin = AppTab.Courses
                                 },
+                                onRescan = { flowStep = FlowStep.Scan },
                             )
                         }
                     }
                 }
             }
+        }
+    }
+
+    photoViewer?.let { viewer ->
+        Dialog(
+            onDismissRequest = { photoViewer = null },
+            properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+        ) {
+            FullscreenPhotoScreen(
+                photos = viewer.photos,
+                startIndex = viewer.index,
+                onBack = { photoViewer = null },
+            )
         }
     }
 

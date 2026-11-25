@@ -30,8 +30,6 @@ import com.classroll.photo.recognition.PhotoRecognizer
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -47,13 +45,11 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
     private val settingsStore = ScanSettingsStore(application)
     private val mediaRepository = MediaStorePhotoRepository(application)
     private val exifReader = CameraExifReader(application)
-    private val recordStore = ScanRecordStore(application)
     private val archiveStore = MediaArchiveStore(application)
     private val archiveIndexStore = ArchiveIndexStore(application)
     private val mutableState = MutableStateFlow(ScanUiState())
     val state = mutableState.asStateFlow()
     private var scanJob: Job? = null
-    private var recordJob: Job? = null
     private val timeFormat = DateTimeFormatter.ofPattern("MM-dd HH:mm")
 
     init {
@@ -68,20 +64,15 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
     fun startPicker(uris: List<Uri>) {
         if (uris.isEmpty()) return
         startJob { startedAt ->
-            withContext(Dispatchers.IO) { recordStore.pruneOldScans() }
             mutableState.update {
                 it.copy(
                     source = ScanSource.Picker,
-                    groups = mapOf(TEST_GROUP_ID to testGroup()),
+                    groups = mapOf(PICKER_GROUP_ID to pickerGroup()),
                     photos = emptyList(),
                     selectedIds = emptySet(),
                     filter = Verdict.Likely,
                     progress = ScanProgress(ScanStage.Querying, uris.size, 0, "读取所选照片", 0L),
                     notice = null,
-                    scanId = recordStore.newScanId(),
-                    touchedIds = emptySet(),
-                    recordRevision = 0,
-                    lastRecordPath = null,
                     confirmed = false,
                     archiving = false,
                     archiveDone = 0,
@@ -97,14 +88,14 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
                     imageUri = media.uri,
                     displayName = media.displayName,
                     mediaStoreId = media.id.takeIf { it >= 0 },
-                    groupId = TEST_GROUP_ID,
+                    groupId = PICKER_GROUP_ID,
                     title = media.displayName.substringBeforeLast('.'),
                     timeLabel = timeFormat.format(media.takenAt ?: media.addedAt),
                     takenAt = media.takenAt ?: media.addedAt,
                     timeSource = media.timeSource,
                 )
             }
-            recognize(photos, mapOf(TEST_GROUP_ID to testGroup()), startedAt)
+            recognize(photos, mapOf(PICKER_GROUP_ID to pickerGroup()), startedAt)
         }
     }
 
@@ -116,11 +107,10 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
         }
         val context = getApplication<Application>()
         if (!MediaPermission.hasFullAccess(context)) {
-            mutableState.update { it.copy(notice = "需要“全部照片”权限才能扫描完整相册；也可以选图测试识别") }
+            mutableState.update { it.copy(notice = "需要“全部照片”权限才能扫描完整相册；也可以手动选择照片识别") }
             return
         }
         startJob { startedAt ->
-            withContext(Dispatchers.IO) { recordStore.pruneOldScans() }
             mutableState.update {
                 it.copy(
                     source = ScanSource.FullAlbum,
@@ -130,10 +120,6 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
                     filter = Verdict.Likely,
                     progress = ScanProgress(ScanStage.Querying, 0, 0, "读取相册索引", 0L),
                     notice = null,
-                    scanId = recordStore.newScanId(),
-                    touchedIds = emptySet(),
-                    recordRevision = 0,
-                    lastRecordPath = null,
                     confirmed = false,
                     archiving = false,
                     archiveDone = 0,
@@ -228,7 +214,6 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
                     progress = ScanProgress(ScanStage.Done, 0, 0, "没有找到落在课程时间内的照片", elapsed),
                 )
             }
-            persistSnapshot(RecordTrigger.ScanComplete, elapsed)
             return
         }
         PhotoRecognizer(getApplication()).use { recognizer ->
@@ -291,63 +276,11 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
                     ),
                 )
             }
-            persistSnapshot(RecordTrigger.ScanComplete, elapsed)
         }
     }
 
-    /** 扫描结束 / 人工确认时写完整快照；勾选变化只写防抖后的 latest + 追加历史。 */
-    private suspend fun persistSnapshot(trigger: RecordTrigger, startedAt: Long) {
-        val snapshot = mutableState.value
-        if (snapshot.scanId == null) {
-            android.util.Log.w("ScanViewModel", "persistSnapshot skipped: scanId is null")
-            return
-        }
-        val elapsed = if (startedAt > 0) android.os.SystemClock.elapsedRealtime() - startedAt else snapshot.progress.elapsedMillis
-        val file = runCatching {
-            withContext(NonCancellable) { recordStore.writeSnapshot(snapshot, trigger, elapsed) }
-        }.onFailure { error ->
-            android.util.Log.e("ScanViewModel", "record write failed: ${trigger.wireName}", error)
-            mutableState.update {
-                it.copy(notice = "记录写入失败：${error.message ?: error.javaClass.simpleName}")
-            }
-        }.getOrNull() ?: return
-        mutableState.update {
-            it.copy(
-                lastRecordPath = file.absolutePath,
-                notice = when (trigger) {
-                    RecordTrigger.ScanComplete -> "扫描记录已保存：${file.name}"
-                    RecordTrigger.ConfirmDone -> "勾选结果已保存：${file.name}"
-                    RecordTrigger.SelectionChanged -> it.notice
-                },
-            )
-        }
-    }
-
-    private fun noteSelectionChange(changedIds: Set<String>, trigger: String) {
-        val current = mutableState.value
-        if (current.scanId == null || current.photos.isEmpty()) return
-        mutableState.update { it.copy(recordRevision = it.recordRevision + 1, touchedIds = it.touchedIds + changedIds) }
-        val snapshot = mutableState.value
-        viewModelScope.launch {
-            runCatching { recordStore.appendSelectionEvent(snapshot, trigger, changedIds) }
-        }
-        recordJob?.cancel()
-        recordJob = viewModelScope.launch {
-            delay(800)
-            val latest = mutableState.value
-            val file = runCatching {
-                recordStore.writeSnapshot(latest, RecordTrigger.SelectionChanged, latest.progress.elapsedMillis)
-            }.getOrNull() ?: return@launch
-            mutableState.update { it.copy(lastRecordPath = file.absolutePath) }
-        }
-    }
-
-    /** 确认页点“完成”时调用：写最终版记录。 */
     fun confirmSelection() {
-        viewModelScope.launch {
-            mutableState.update { it.copy(confirmed = true) }
-            persistSnapshot(RecordTrigger.ConfirmDone, 0L)
-        }
+        mutableState.update { it.copy(confirmed = true) }
     }
 
     fun cancelScan() {
@@ -356,7 +289,6 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clearScan() {
         scanJob?.cancel()
-        recordJob?.cancel()
         mutableState.update {
             it.copy(
                 photos = emptyList(),
@@ -365,9 +297,6 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
                 source = null,
                 progress = ScanProgress(),
                 notice = null,
-                scanId = null,
-                touchedIds = emptySet(),
-                recordRevision = 0,
                 confirmed = false,
             )
         }
@@ -381,7 +310,6 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
         mutableState.update {
             it.copy(selectedIds = if (id in it.selectedIds) it.selectedIds - id else it.selectedIds + id)
         }
-        noteSelectionChange(setOf(id), "toggle")
     }
 
     fun selectCurrentFilter() {
@@ -389,7 +317,6 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
         mutableState.update { state ->
             state.copy(selectedIds = state.selectedIds + ids, notice = "已全选本档照片")
         }
-        noteSelectionChange(ids, "select_all")
     }
 
     fun invertCurrentFilter() {
@@ -400,7 +327,6 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
                 notice = "已反选本档照片",
             )
         }
-        noteSelectionChange(ids, "invert")
     }
 
     fun skipGroup(groupId: String) {
@@ -410,7 +336,6 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
         mutableState.update { state ->
             state.copy(selectedIds = state.selectedIds - ids, notice = "已排除本组当前档照片")
         }
-        noteSelectionChange(ids, "skip_group")
     }
 
     fun retryPhoto(id: String) {
@@ -520,7 +445,7 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
         }
         if (snapshot.archiving) return
         if (snapshot.source != ScanSource.FullAlbum) {
-            mutableState.update { it.copy(notice = "选图测试不归档；请用全相册扫描按课程归档") }
+            mutableState.update { it.copy(notice = "手动选择的照片不归档；请用全相册扫描按课程归档") }
             return
         }
         val selected = snapshot.photos.filter { it.id in snapshot.selectedIds }
@@ -680,16 +605,16 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch { settingsStore.saveIncludeSharedImages(enabled) }
     }
 
-    private fun testGroup() = PhotoGroup(
-        id = TEST_GROUP_ID,
-        course = "测试照片",
-        session = "系统选图",
+    private fun pickerGroup() = PhotoGroup(
+        id = PICKER_GROUP_ID,
+        course = "手动选择的照片",
+        session = "手动选择",
         meta = "不参与课程时间匹配 · 全部在本机识别",
         week = null,
         date = null,
     )
 
     private companion object {
-        const val TEST_GROUP_ID = "picker-test"
+        const val PICKER_GROUP_ID = "picker-manual"
     }
 }

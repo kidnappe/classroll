@@ -45,7 +45,6 @@ import coil.compose.AsyncImage
 import com.classroll.photo.data.ArchiveItem
 import com.classroll.photo.ui.ClassrollCard
 import com.classroll.photo.ui.ClassrollIcons
-import com.classroll.photo.ui.InfoChip
 import com.classroll.photo.ui.PaperTape
 import com.classroll.photo.ui.ScreenTitle
 import com.classroll.photo.ui.VerticalDashedDivider
@@ -63,7 +62,7 @@ fun LibraryScreen(
     items: List<ArchiveItem>,
     added: Int,
     onScan: () -> Unit,
-    onOpenPhoto: (ArchiveItem) -> Unit,
+    onOpenPhotos: (List<ArchiveItem>, Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var mode by remember { mutableStateOf(LibraryMode.Week) }
@@ -91,7 +90,7 @@ fun LibraryScreen(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         item {
-            ScreenTitle(title = "归档相册", trailing = { InfoChip("只复制", ClassrollIcons.Shield) })
+            ScreenTitle(title = "归档相册")
         }
         item {
             LibrarySummary(total = items.size, albumCount = courseGroups.size, added = added)
@@ -137,7 +136,7 @@ fun LibraryScreen(
                                 title = sessionKey.first,
                                 subtitle = dateLabel(sessionKey.second),
                                 photos = photos,
-                                onOpenPhoto = onOpenPhoto,
+                                onOpen = { index -> onOpenPhotos(photos, index) },
                             )
                         }
                     }
@@ -168,7 +167,7 @@ fun LibraryScreen(
                                 title = if (sessionKey.first > 0) "第 ${sessionKey.first} 周" else "未识别周次",
                                 subtitle = dateLabel(sessionKey.second),
                                 photos = photos,
-                                onOpenPhoto = onOpenPhoto,
+                                onOpen = { index -> onOpenPhotos(photos, index) },
                             )
                         }
                     }
@@ -296,7 +295,7 @@ private fun SessionBlock(
     title: String,
     subtitle: String,
     photos: List<ArchiveItem>,
-    onOpenPhoto: (ArchiveItem) -> Unit,
+    onOpen: (Int) -> Unit,
 ) {
     val missing = photos.count { !it.available }
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
@@ -317,13 +316,13 @@ private fun SessionBlock(
         }
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            photos.take(5).forEach { photo ->
+            photos.take(5).forEachIndexed { index, photo ->
                 Box(
                     modifier = Modifier
                         .size(56.dp)
                         .clip(RoundedCornerShape(LocalSkin.current.corner(8.dp)))
                         .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .clickable { onOpenPhoto(photo) },
+                        .clickable { onOpen(index) },
                     contentAlignment = Alignment.Center,
                 ) {
                     if (photo.available) {
