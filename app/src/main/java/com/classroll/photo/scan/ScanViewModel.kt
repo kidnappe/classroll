@@ -520,6 +520,16 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** 只移除归档记录，不删除系统相册里的原图。 */
+    fun deleteArchivedItems(uris: Set<String>) {
+        if (uris.isEmpty()) return
+        viewModelScope.launch {
+            archiveIndexStore.removeByUris(uris)
+            refreshLibrary()
+            mutableState.update { it.copy(notice = "已从归档移除 ${uris.size} 张，原图未删除") }
+        }
+    }
+
     fun refreshLibrary() {
         viewModelScope.launch {
             val entries = runCatching { archiveIndexStore.load() }.getOrDefault(emptyList())

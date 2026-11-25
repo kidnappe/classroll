@@ -310,6 +310,7 @@ fun AppShell(
                             val start = all.indexOfFirst { it.uri == clicked?.uri }.takeIf { it >= 0 } ?: 0
                             photoViewer = PhotoViewer(if (all.isEmpty()) photos else all, start)
                         },
+                        onRemovePhotos = viewModel::deleteArchivedItems,
                     )
                     AppTab.Settings -> SettingsScreen(
                         schedule = state.schedule,

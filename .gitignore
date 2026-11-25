@@ -16,3 +16,9 @@ keystore.properties
 # 本地开发资料：真机扫描记录、样本照片、交接文档
 artifacts/
 HANDOFF.md
+
+# GitHub 发布临时文件
+.release.json
+release-out.json
+upload-out.json
+repo-create.*

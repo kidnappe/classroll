@@ -45,6 +45,11 @@ class ArchiveIndexStore(context: Context) {
         write(merged.values.toList())
     }
 
+    suspend fun removeByUris(uris: Set<String>) = withContext(Dispatchers.IO) {
+        if (uris.isEmpty()) return@withContext
+        write(read().filterNot { it.uri in uris })
+    }
+
     suspend fun removeCourse(term: String, course: String) = withContext(Dispatchers.IO) {
         write(read().filterNot { it.term == term && it.course == course })
     }

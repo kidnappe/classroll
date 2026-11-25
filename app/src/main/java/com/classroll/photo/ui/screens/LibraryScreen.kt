@@ -1,6 +1,8 @@
 package com.classroll.photo.ui.screens
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,7 +20,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -63,10 +69,18 @@ fun LibraryScreen(
     added: Int,
     onScan: () -> Unit,
     onOpenPhotos: (List<ArchiveItem>, Int) -> Unit,
+    onRemovePhotos: (Set<String>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var mode by remember { mutableStateOf(LibraryMode.Week) }
     val expanded = remember { mutableStateMapOf<String, Boolean>() }
+    var selectMode by remember { mutableStateOf(false) }
+    var selectedUris by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var showRemoveConfirm by remember { mutableStateOf(false) }
+    fun exitSelect() {
+        selectMode = false
+        selectedUris = emptySet()
+    }
     val weekGroups = remember(items) {
         items.groupBy { it.term to it.week }
             .toList()
@@ -90,7 +104,26 @@ fun LibraryScreen(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         item {
-            ScreenTitle(title = "归档相册")
+            if (selectMode) {
+                ScreenTitle(
+                    title = "已选择 ${selectedUris.size} 张",
+                    trailing = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            TextButton(onClick = { exitSelect() }) {
+                                Text("取消", style = MaterialTheme.typography.labelLarge)
+                            }
+                            TextButton(
+                                onClick = { if (selectedUris.isNotEmpty()) showRemoveConfirm = true },
+                                enabled = selectedUris.isNotEmpty(),
+                            ) {
+                                Text("移除", style = MaterialTheme.typography.labelLarge, color = PaperTerracotta)
+                            }
+                        }
+                    },
+                )
+            } else {
+                ScreenTitle(title = "归档相册")
+            }
         }
         item {
             LibrarySummary(total = items.size, albumCount = courseGroups.size, added = added)
@@ -136,7 +169,16 @@ fun LibraryScreen(
                                 title = sessionKey.first,
                                 subtitle = dateLabel(sessionKey.second),
                                 photos = photos,
+                                selectMode = selectMode,
+                                selectedUris = selectedUris,
                                 onOpen = { index -> onOpenPhotos(photos, index) },
+                                onToggleSelect = { item ->
+                                    selectedUris = if (item.uri in selectedUris) selectedUris - item.uri else selectedUris + item.uri
+                                },
+                                onEnterSelect = { item ->
+                                    selectMode = true
+                                    selectedUris = selectedUris + item.uri
+                                },
                             )
                         }
                     }
@@ -167,13 +209,44 @@ fun LibraryScreen(
                                 title = if (sessionKey.first > 0) "第 ${sessionKey.first} 周" else "未识别周次",
                                 subtitle = dateLabel(sessionKey.second),
                                 photos = photos,
+                                selectMode = selectMode,
+                                selectedUris = selectedUris,
                                 onOpen = { index -> onOpenPhotos(photos, index) },
+                                onToggleSelect = { item ->
+                                    selectedUris = if (item.uri in selectedUris) selectedUris - item.uri else selectedUris + item.uri
+                                },
+                                onEnterSelect = { item ->
+                                    selectMode = true
+                                    selectedUris = selectedUris + item.uri
+                                },
                             )
                         }
                     }
                 }
             }
         }
+    }
+
+    if (showRemoveConfirm) {
+        AlertDialog(
+            onDismissRequest = { showRemoveConfirm = false },
+            title = { Text("从归档移除") },
+            text = { Text("移除 ${selectedUris.size} 张照片的归档记录？系统相册里的原图不会被删除。") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onRemovePhotos(selectedUris)
+                        showRemoveConfirm = false
+                        exitSelect()
+                    },
+                ) {
+                    Text("移除", color = PaperTerracotta)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRemoveConfirm = false }) { Text("取消") }
+            },
+        )
     }
 }
 
@@ -290,14 +363,21 @@ private fun GroupCard(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun SessionBlock(
     title: String,
     subtitle: String,
     photos: List<ArchiveItem>,
+    selectMode: Boolean,
+    selectedUris: Set<String>,
     onOpen: (Int) -> Unit,
+    onToggleSelect: (ArchiveItem) -> Unit,
+    onEnterSelect: (ArchiveItem) -> Unit,
 ) {
     val missing = photos.count { !it.available }
+    val skin = LocalSkin.current
+    val checkShape = if (skin.hardShadow != null) RoundedCornerShape(0.dp) else CircleShape
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -315,14 +395,21 @@ private fun SessionBlock(
             )
         }
         Spacer(Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            photos.take(5).forEachIndexed { index, photo ->
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            itemsIndexed(photos, key = { _, photo -> photo.uri }) { index, photo ->
+                val checked = photo.uri in selectedUris
                 Box(
                     modifier = Modifier
                         .size(56.dp)
-                        .clip(RoundedCornerShape(LocalSkin.current.corner(8.dp)))
+                        .clip(RoundedCornerShape(skin.corner(8.dp)))
                         .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .clickable { onOpen(index) },
+                        .combinedClickable(
+                            onClick = { if (selectMode) onToggleSelect(photo) else onOpen(index) },
+                            onLongClick = { onEnterSelect(photo) },
+                        ),
                     contentAlignment = Alignment.Center,
                 ) {
                     if (photo.available) {
@@ -340,14 +427,22 @@ private fun SessionBlock(
                             modifier = Modifier.size(18.dp),
                         )
                     }
-                }
-            }
-            if (photos.size > 5) {
-                Box(
-                    modifier = Modifier.size(56.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(LocalSkin.current.corner(8.dp))),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text("+${photos.size - 5}", style = MaterialTheme.typography.labelMedium)
+                    if (selectMode) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(3.dp)
+                                .size(18.dp)
+                                .clip(checkShape)
+                                .background(if (checked) skin.accent else Color.Black.copy(alpha = .45f))
+                                .border(1.dp, Color.White, checkShape),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            if (checked) {
+                                Icon(ClassrollIcons.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
+                            }
+                        }
+                    }
                 }
             }
         }
