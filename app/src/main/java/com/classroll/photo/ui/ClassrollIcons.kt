@@ -32,6 +32,7 @@ object ClassrollIcons {
     val Alert = strokeIcon("Alert", "M12 3.8 21 20H3L12 3.8Z", "M12 9v5M12 17.2v.1")
     val Eye = strokeIcon("Eye", "M2.8 12S6.3 5.8 12 5.8 21.2 12 21.2 12 17.7 18.2 12 18.2 2.8 12 2.8 12Z", "M14.7 12a2.7 2.7 0 1 1-5.4 0 2.7 2.7 0 0 1 5.4 0Z")
     val Plus = strokeIcon("Plus", "M12 5v14M5 12h14")
+    val Code = strokeIcon("Code", "m9 8-4 4 4 4", "M15 8l4 4-4 4")
     val Calendar = strokeIcon("Calendar", "M4.5 6.5h15v13h-15z", "M4.5 10.5h15", "M8.2 4v4M15.8 4v4")
 
     private fun strokeIcon(name: String, vararg paths: String): ImageVector {

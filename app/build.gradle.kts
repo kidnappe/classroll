@@ -20,8 +20,8 @@ android {
         applicationId = "com.classroll.photo"
         minSdk = 29
         targetSdk = 35
-        versionCode = 20
-        versionName = "1.0.6"
+        versionCode = 21
+        versionName = "1.0.7"
 
         // 发布包只带手机用到的 ABI；模拟器用的 x86/x86_64 仅在 debug 构建里保留。
         ndk {

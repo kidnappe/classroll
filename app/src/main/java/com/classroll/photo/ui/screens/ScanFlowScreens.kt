@@ -89,6 +89,7 @@ fun ScanScreen(
     progress: ScanProgress,
     counts: Map<Verdict, Int>,
     hasSchedule: Boolean,
+    hasArchived: Boolean,
     onStartFullScan: () -> Unit,
     onRescanAll: () -> Unit,
     onCancel: () -> Unit,
@@ -152,7 +153,7 @@ fun ScanScreen(
                     icon = ClassrollIcons.ArrowRight,
                 )
                 else -> PrimaryButton(
-                    text = "扫描全相册",
+                    text = if (hasArchived) "扫描新增照片" else "扫描全相册",
                     onClick = onStartFullScan,
                     modifier = Modifier.fillMaxWidth(),
                     icon = ClassrollIcons.Scan,

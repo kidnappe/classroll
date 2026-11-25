@@ -17,9 +17,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -255,8 +257,16 @@ fun AppShell(
                 BottomNavigation(
                     selectedTab = currentTab,
                     scanning = flowStep != null,
+                    backgroundScan = state.progress.running && flowStep == null,
                     onTab = { tab ->
-                        if (flowStep != null) exitFlow()
+                        if (flowStep != null) {
+                            if (state.progress.running) {
+                                // 扫描继续在后台跑，只收起流程页面。
+                                flowStep = null
+                            } else {
+                                exitFlow()
+                            }
+                        }
                         currentTab = tab
                     },
                     onScan = ::openScanFlow,
@@ -346,6 +356,7 @@ fun AppShell(
                                 progress = state.progress,
                                 counts = state.counts,
                                 hasSchedule = state.schedule != null,
+                                hasArchived = state.archiveItems.isNotEmpty(),
                                 onStartFullScan = { startFullScan() },
                                 onRescanAll = { startFullScan(true) },
                                 onCancel = viewModel::cancelScan,
@@ -470,6 +481,7 @@ private fun FlowHeader(step: FlowStep, onBack: () -> Unit) {
 private fun BottomNavigation(
     selectedTab: AppTab,
     scanning: Boolean,
+    backgroundScan: Boolean,
     onTab: (AppTab) -> Unit,
     onScan: () -> Unit,
 ) {
@@ -486,7 +498,7 @@ private fun BottomNavigation(
     ) {
         Row(modifier = Modifier.fillMaxWidth().height(62.dp)) {
             TabBarItem("课程", ClassrollIcons.Book, !scanning && selectedTab == AppTab.Courses) { onTab(AppTab.Courses) }
-            TabBarItem("扫描", ClassrollIcons.Scan, scanning, onScan)
+            TabBarItem("扫描", ClassrollIcons.Scan, scanning, badge = backgroundScan, onClick = onScan)
             TabBarItem("归档", ClassrollIcons.FolderCheck, !scanning && selectedTab == AppTab.Library) { onTab(AppTab.Library) }
             TabBarItem("设置", ClassrollIcons.Settings, !scanning && selectedTab == AppTab.Settings) { onTab(AppTab.Settings) }
         }
@@ -498,6 +510,7 @@ private fun androidx.compose.foundation.layout.RowScope.TabBarItem(
     label: String,
     icon: ImageVector,
     selected: Boolean,
+    badge: Boolean = false,
     onClick: () -> Unit,
 ) {
     val skin = LocalSkin.current
@@ -527,12 +540,22 @@ private fun androidx.compose.foundation.layout.RowScope.TabBarItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Icon(
-            icon,
-            contentDescription = null,
-            modifier = Modifier.size(21.dp),
-            tint = tint,
-        )
+        Box(contentAlignment = Alignment.TopEnd) {
+            Icon(
+                icon,
+                contentDescription = null,
+                modifier = Modifier.size(21.dp),
+                tint = tint,
+            )
+            if (badge) {
+                Box(
+                    modifier = Modifier
+                        .offset(x = 3.dp, y = (-1).dp)
+                        .size(6.dp)
+                        .background(skin.accent, CircleShape),
+                )
+            }
+        }
         Spacer(Modifier.height(3.dp))
         Text(
             label,

@@ -1,5 +1,8 @@
 package com.classroll.photo.ui.screens
 
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -45,6 +48,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -238,8 +242,22 @@ fun SettingsScreen(
                 )
             }
         }
+        item { SectionLabel("外观") }
+        item {
+            val skin = LocalSkin.current
+            ClassrollCard(contentPadding = PaddingValues(0.dp)) {
+                SettingRow(
+                    iconContent = { SkinGlyph() },
+                    title = "皮肤",
+                    subtitle = skin.tagline,
+                    value = skin.label,
+                    onClick = { showSkinPicker = true },
+                )
+            }
+        }
         item { SectionLabel("存储与隐私") }
         item {
+            val context = LocalContext.current
             ClassrollCard(contentPadding = PaddingValues(0.dp)) {
                 SettingRow(
                     icon = ClassrollIcons.Trash,
@@ -256,18 +274,21 @@ fun SettingsScreen(
                     value = BuildConfig.VERSION_NAME,
                     onClick = onAbout,
                 )
-            }
-        }
-        item { SectionLabel("外观") }
-        item {
-            val skin = LocalSkin.current
-            ClassrollCard(contentPadding = PaddingValues(0.dp)) {
+                SettingDivider()
                 SettingRow(
-                    iconContent = { SkinGlyph() },
-                    title = "皮肤",
-                    subtitle = skin.tagline,
-                    value = skin.label,
-                    onClick = { showSkinPicker = true },
+                    icon = ClassrollIcons.Code,
+                    title = "GitHub 源码",
+                    subtitle = "",
+                    value = "kidnappe/classroll",
+                    onClick = {
+                        runCatching {
+                            context.startActivity(
+                                Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/kidnappe/classroll")),
+                            )
+                        }.onFailure {
+                            Toast.makeText(context, "没有可用的浏览器", Toast.LENGTH_SHORT).show()
+                        }
+                    },
                 )
             }
         }

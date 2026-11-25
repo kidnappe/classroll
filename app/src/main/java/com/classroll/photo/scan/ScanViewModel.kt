@@ -14,6 +14,7 @@ import com.classroll.photo.data.CameraExifReader
 import com.classroll.photo.data.CourseScheduleJson
 import com.classroll.photo.data.CourseScheduleStore
 import com.classroll.photo.data.MediaArchiveStore
+import com.classroll.photo.data.ScanHistoryStore
 import com.classroll.photo.data.MediaStorePhotoRepository
 import com.classroll.photo.data.ScanSettingsStore
 import com.classroll.photo.data.XlsScheduleParser
@@ -48,6 +49,7 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
     private val exifReader = CameraExifReader(application)
     private val archiveStore = MediaArchiveStore(application)
     private val archiveIndexStore = ArchiveIndexStore(application)
+    private val historyStore = ScanHistoryStore(application)
     private val mutableState = MutableStateFlow(ScanUiState())
     val state = mutableState.asStateFlow()
     private var scanJob: Job? = null
@@ -138,6 +140,7 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
             val archivedSessionKeys = archivedEntries
                 .filter { it.week > 0 && it.date.isNotBlank() }
                 .mapTo(mutableSetOf()) { "${it.course}|${it.week}|${it.date}" }
+            val ignoredHistory = if (includeArchived) emptySet() else historyStore.ignoredIds()
             val mediaPhotos = mediaRepository.query(schedule, now)
             val allSessions = schedule.sessions(schedule.semesterStart, now.toLocalDate())
             val sessions = if (sessionIds == null) allSessions else allSessions.filter { it.id in sessionIds }
@@ -149,10 +152,15 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
             var timeMatched = 0
             var archivedExcluded = 0
             var sessionExcluded = 0
+            var historyExcluded = 0
             val photos = withContext(Dispatchers.IO) {
                 mediaPhotos.mapNotNull { media ->
                     if (media.id in archivedIds) {
                         archivedExcluded++
+                        return@mapNotNull null
+                    }
+                    if (media.id in ignoredHistory) {
+                        historyExcluded++
                         return@mapNotNull null
                     }
                     val time = media.takenAt ?: media.addedAt
@@ -197,7 +205,8 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
                         "课程时间匹配完成：${photos.size} 张相机照片" +
                             (if (excluded > 0) "（排除 $excluded 张截图/非相机图片）" else "") +
                             (if (archivedExcluded > 0) " · 跳过 $archivedExcluded 张已归档原图" else "") +
-                            (if (sessionExcluded > 0) " · 跳过 $sessionExcluded 张已扫课程照片" else ""),
+                            (if (sessionExcluded > 0) " · 跳过 $sessionExcluded 张已扫课程照片" else "") +
+                            (if (historyExcluded > 0) " · 跳过 $historyExcluded 张多次未选中照片" else ""),
                         android.os.SystemClock.elapsedRealtime() - startedAt,
                     ),
                 )
@@ -300,7 +309,15 @@ class ScanViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun confirmSelection() {
+        val snapshot = mutableState.value
         mutableState.update { it.copy(confirmed = true) }
+        if (snapshot.source != ScanSource.FullAlbum) return
+        val photoIds = snapshot.photos.mapNotNull { it.mediaStoreId }.toSet()
+        val selectedMediaIds = snapshot.photos
+            .filter { it.id in snapshot.selectedIds }
+            .mapNotNull { it.mediaStoreId }
+            .toSet()
+        viewModelScope.launch { historyStore.recordRound(photoIds, selectedMediaIds) }
     }
 
     fun cancelScan() {
