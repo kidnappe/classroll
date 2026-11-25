@@ -116,7 +116,7 @@
 项目自带 Gradle Wrapper，不需要单独安装 Gradle。
 
 ```bash
-git clone <本仓库地址> classroll
+git clone https://github.com/kidnappe/classroll.git classroll
 cd classroll
 
 ./gradlew :app:assembleDebug
